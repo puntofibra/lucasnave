@@ -1,7 +1,7 @@
 /* LUCAS Y LA NAVE PERDIDA · aventura de Lucas para niños de 6 y 7 años: se anda y se salta como en un plataformas, pero sin malos */
 (() => {
 'use strict';
-const VERSION = '0.3';
+const VERSION = '0.4';
 const API = 'https://script.google.com/macros/s/AKfycby5_qNFSRwDK-qZmzTWTD-O4p7XpdF2zgezm-8PM7xad66uavF7OS4sWafVRWQzN3pI/exec';
 const GOOGLE_ID = '454055120059-nuhaop4r62urc3u036cc3grpqo71ulg7.apps.googleusercontent.com';
 const $ = id => document.getElementById(id);
@@ -24,7 +24,9 @@ function img(n, src) { if (!IMG[n]) { const im = new Image(); im.src = src || ('
 const ok = im => im && im.complete && im.naturalWidth && !im._bad;
 ['lucas-quieto', 'lucas-avanzando', 'lucas-celebrando', 'lucas-saltando', 'suelo', 'obj-puerta', 'obj-chip'].forEach(n => img(n));
 // imágenes nuevas (PNG sin fondo que irán llegando): mientras no existan, se dibuja una versión provisional por código
-function opt(n) { const im = img(n, 'img/' + n + '.png?v=' + VERSION); return ok(im) ? im : null; }
+const HAVE = new Set(['pj-capi', 'pj-capi-2', 'pj-capi-dormida', 'pj-chef', 'pj-chef-2', 'pj-bolita', 'pj-bolita-2', 'pj-chispa', 'pj-chispa-2', 'pj-chispa-3', 'lucas-espaldas']);   // imágenes nuevas que ya existen (las demás se dibujan provisionales)
+function opt(n) { if (!HAVE.has(n)) return null; const im = img(n); return ok(im) ? im : null; }
+HAVE.forEach(n => img(n));
 
 /* ---------- opciones ---------- */
 let sndOn = true, musOn = true, VOZ_ON = true;
@@ -220,11 +222,13 @@ function animDoors(dt) { for (const k in DOORS) { const d = DOORS[k]; d.o += Mat
 /* ---------- personajes provisionales (robots dibujados) ---------- */
 const CH = {};
 function drawBot(id, x, o) {
-  const c = CH[id] || (CH[id] = { talk: 0 }); c.x = x; c.top = R.floor - (o.h || 260);
+  const c = CH[id] || (CH[id] = { talk: 0 }); c.x = x; c.top = R.floor - (o.h || 260) + (o.img ? 0 : 0);
   const t = time + x * 0.01, y = R.floor + 4, bob = Math.sin(t * 2.4) * 5, sx = x - camX, mouth = c.talk > 0 ? Math.abs(Math.sin(time * 18)) : 0.15;
   if (sx < -200 || sx > VW + 200) return;
-  const base = 'pj-' + id + (o.sleep ? '-dormida' : ''), fr = [opt(base), opt(base + '-2'), opt(base + '-3')].filter(Boolean), pi = fr.length ? fr[Math.floor(time * (c.talk > 0 ? 8 : 3) + x) % fr.length] : null;
-  if (pi) { const h = o.h || 260, w = h * pi.naturalWidth / pi.naturalHeight; ctx.save(); ctx.translate(sx, y + bob * 0.4); if (o.flip) ctx.scale(-1, 1); ctx.scale(1, 1 + mouth * 0.015); ctx.drawImage(pi, -w / 2, -h, w, h); ctx.restore(); return; }
+  const base = o.img || ('pj-' + id + (o.sleep ? '-dormida' : '')), f0 = opt(base), f2 = opt(base + '-2'), f3 = opt(base + '-3'), pi = !f0 ? null : c.talk > 0 && f2 ? (Math.floor(time * 7) % 2 ? f2 : f0) : f3 && (time + x * 0.01) % 4 > 3.3 ? f3 : f0;
+  if (pi) { const h = o.h || 260, w = h * pi.naturalWidth / pi.naturalHeight, lf = o.lift || 0; ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(sx, y, w * 0.4, 12, 0, 0, 7); ctx.fill(); ctx.save(); ctx.translate(sx, y + (lf ? bob * 2 : bob * 0.3) - lf); if (o.flip) ctx.scale(-1, 1); ctx.scale(1, 1 + mouth * 0.02); ctx.drawImage(pi, -w / 2, -h, w, h); ctx.restore();
+    if (o.sleep) { ctx.font = '900 40px Orbitron'; ctx.textAlign = 'center'; ctx.fillStyle = '#9ff0ff'; const zt = (time * 0.6) % 1; ctx.globalAlpha = 1 - zt; ctx.fillText('Z', sx + 70 + zt * 30, y - h - zt * 60); ctx.font = '900 28px Orbitron'; ctx.fillText('z', sx + 50 + zt * 20, y - h + 30 - zt * 40); ctx.globalAlpha = 1; }
+    return; }
   ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(sx, y, 70, 14, 0, 0, 7); ctx.fill();
   ctx.save(); ctx.translate(sx, y - 20 + bob); const col = o.col || '#4a8aff';
   if (o.kind === 'bola') { ctx.fillStyle = lg(-60, -120, 60, 0, ['#fff', col, '#1a2a6a']); ctx.beginPath(); ctx.arc(0, -70, 70, 0, 7); ctx.fill(); stroke(); }
@@ -324,7 +328,7 @@ room('pasillo', {
   hot: [
     { id: 'pCam', x: 180, w: 220, h: 330, ic: '🚪', door: dk('pcam', 'camarote', 1460, 'CAMAROTE'), draw() { drawDoor(this); } },
     { id: 'pCoc', x: 620, w: 220, h: 330, ic: '🚪', door: dk('pcoc', 'cocina', 220, 'COCINA'), draw() { drawDoor(this); } },
-    { id: 'bolita', x: 920, w: 170, h: 200, ic: '👋', ch: true, draw: () => drawBot('bolita', 920, { kind: 'bola', col: '#ff9a3a', eye: '#29e6ff', h: 180 }), act: bolita },
+    { id: 'bolita', x: 920, w: 170, h: 200, ic: '👋', ch: true, draw: () => drawBot('bolita', 920, { kind: 'bola', col: '#ff9a3a', eye: '#29e6ff', h: 215, lift: 34, img: F('bolitaFeliz') ? 'pj-bolita-2' : 'pj-bolita' }), act: bolita },
     { id: 'pInv', x: 1300, w: 220, h: 330, ic: '🚪', door: dk('pinv', 'invernadero', 220, 'INVERNADERO'), draw() { drawDoor(this); } },
     { id: 'pTie', x: 1700, w: 220, h: 330, ic: '🚪', door: dk('ptie', 'tienda', 200, ''), draw() { drawShopFront(1700); drawDoor(this); } },
     { id: 'cajon', x: 2830, w: 170, h: 150, ic: '🔨', vis: () => !F('cajaRota'), draw: () => drawCajon(2830),
@@ -356,7 +360,7 @@ room('tienda', {
     if (l === 'suelo') { floorDraw('rgba(140,60,200,.25)'); return; } if (l === 'delante') return frontPipes(21, '#5a2a8a'); },
   hot: [
     { id: 'tDoor', x: 200, w: 220, h: 330, ic: '🚪', door: dk('tdoor', 'pasillo', 1700, 'PASILLO'), draw() { drawDoor(this); } },
-    { id: 'mostr', x: 880, w: 460, h: 150, draw: () => { drawBot('chispa', 880, { col: '#b04aff', eye: '#ffd23c', hat: 'antena', h: 290 }); drawProp('mostrador', 880); }, ic: '🛒', act: () => shop() }
+    { id: 'mostr', x: 880, w: 460, h: 150, draw: () => { drawBot('chispa', 880, { col: '#b04aff', eye: '#ffd23c', hat: 'antena', h: 330 }); drawProp('mostrador', 880); }, ic: '🛒', act: () => shop() }
   ],
   enter() { if (!G.seen.tienda) { G.seen.tienda = 1; save(); say([['chispa', '¡Bienvenido a mi tienda, Lucas!'], ['chispa', 'Soy Chispa. Tengo cosas geniales.'], ['chispa', 'Trae monedas y te las vendo.']]); } }
 });
@@ -372,7 +376,7 @@ room('cocina', {
       act() { say([['lucas', '¡Una regadera!']], () => { setF('regadera'); give('regadera'); }); } },
     { id: 'estanteria', x: 470, w: 240, h: 200, y: 420, ic: '👁', vis: () => !F('regadera') && !F('vioEst'), act() { setF('vioEst'); say([['lucas', 'Arriba del todo hay una regadera.'], ['lucas', '¡Tengo que saltar por las baldas!']]); } },
     { id: 'cocinaF', x: 860, w: 400, h: 150, ic: '👁', draw: () => drawProp('cocina', 860), act() { say([['lucas', '¡Cuidado, quema!']]); } },
-    { id: 'chef', x: 1100, w: 170, h: 300, ic: '👋', ch: true, draw: () => drawBot('chef', 1100, { col: '#ff5a6a', eye: '#ffd23c', hat: 'chef', h: 300 }), act: chef },
+    { id: 'chef', x: 1100, w: 170, h: 300, ic: '👋', ch: true, draw: () => drawBot('chef', 1100, { col: '#ff5a6a', eye: '#ffd23c', hat: 'chef', h: 345 }), act: chef },
     { id: 'nevera', x: 1560, w: 160, h: 320, ic: '👁', draw: () => drawProp('nevera', 1560), act() { say([['lucas', 'La nevera está vacía.'], ['lucas', '¡No hay ni una manzana!']]); } }
   ],
   enter() { if (!G.seen.cocina) { G.seen.cocina = 1; save(); say([['narr', 'La cocina huele a tornillos tostados.']]); } }
@@ -439,7 +443,7 @@ room('puente', {
     { id: 'uAsc', x: 150, w: 220, h: 330, ic: '🛗', door: dk('uasc', '__bajar', 0, 'ASCENSOR'), draw() { drawDoor(this); } },
     { id: 'panel', x: 660, w: 440, h: 170, ic: '✋', draw: () => drawProp('panel', 660), act: panel },
     { id: 'pantalla', x: 1040, w: 440, h: 260, y: 150, ic: '👁', draw: () => drawProp('pantalla', 1040), act() { say([['narr', 'En la pantalla hay un mapa de estrellas.'], ['narr', 'Pero no sale nuestro planeta.']]); } },
-    { id: 'capi', x: 1420, w: 170, h: 300, ic: '👋', ch: true, draw: () => drawBot('capi', 1420, { col: '#29e6ff', eye: '#ffd23c', hat: 'capi', sleep: !F('capiDespierta'), h: 300 }), act: capi }
+    { id: 'capi', x: 1420, w: 170, h: 300, ic: '👋', ch: true, draw: () => drawBot('capi', 1420, { col: '#29e6ff', eye: '#ffd23c', hat: 'capi', sleep: !F('capiDespierta'), h: 345 }), act: capi }
   ],
   enter() { if (!G.seen.puente) { G.seen.puente = 1; save(); say([['narr', '¡El puente de mando! Desde aquí se conduce la nave.'], ['lucas', '¡Ahí está la capitana! Pero... ¿está dormida?']]); } }
 });
