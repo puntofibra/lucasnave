@@ -1,7 +1,7 @@
 /* LUCAS Y LA NAVE PERDIDA · aventura de Lucas para niños de 6 y 7 años: se anda y se salta como en un plataformas, pero sin malos */
 (() => {
 'use strict';
-const VERSION = '0.6';
+const VERSION = '0.7';
 const API = 'https://script.google.com/macros/s/AKfycby5_qNFSRwDK-qZmzTWTD-O4p7XpdF2zgezm-8PM7xad66uavF7OS4sWafVRWQzN3pI/exec';
 const GOOGLE_ID = '454055120059-nuhaop4r62urc3u036cc3grpqo71ulg7.apps.googleusercontent.com';
 const $ = id => document.getElementById(id);
@@ -72,7 +72,10 @@ function startMusic() {
 
 /* ---------- voz del narrador ---------- */
 let VOICE = null;
-function pickVoice() { try { const vs = speechSynthesis.getVoices(); VOICE = vs.find(v => /es[-_]ES/i.test(v.lang) && /female|mujer|helena|elvira|monica|lucia|google/i.test(v.name)) || vs.find(v => /es[-_]ES/i.test(v.lang)) || vs.find(v => /^es/i.test(v.lang)) || null; } catch (e) {} }
+const BADV = new Set();
+// voces en orden de preferencia: las de Google primero (en algunos PC con Windows las voces de Microsoft fallan y no suenan)
+function voiceList() { try { const vs = speechSynthesis.getVoices().filter(v => /^es/i.test(v.lang) && !BADV.has(v.name)), sc = v => (/google/i.test(v.name) ? 0 : 10) + (/es[-_]ES/i.test(v.lang) ? 0 : 3) + (/helena|laura|elvira|monica|lucia|female|mujer/i.test(v.name) ? 0 : 1); return vs.sort((a, b) => sc(a) - sc(b)); } catch (e) { return []; } }
+function pickVoice() { VOICE = voiceList()[0] || null; }
 try { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; } catch (e) {}
 let UTT = null, speakT = 0, VOZ_OK = false;
 // desbloquea la voz con el primer toque (los móviles no dejan hablar si no ha habido un toque antes)
@@ -84,9 +87,11 @@ function speak(t, pitch = 1.05, rate = 0.92, cb) {
   try { if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); } catch (e) {}
   // pequeña espera tras cancelar: en Chrome, hablar justo después de cancelar a veces no suena
   speakT = setTimeout(() => {
-    try { if (!VOICE) pickVoice(); const u = new SpeechSynthesisUtterance(t.replace(/[¡¿]/g, '')); u.lang = VOICE ? VOICE.lang : 'es-ES'; if (VOICE) u.voice = VOICE; u.pitch = pitch; u.rate = rate; u.volume = 1;
-      let done = false; const fin = () => { if (!done) { done = true; cb && cb(); } }; u.onend = fin; u.onerror = fin; UTT = u; speechSynthesis.resume(); speechSynthesis.speak(u);
-      setTimeout(fin, 1500 + t.length * 90); } catch (e) { if (cb) cb(); }
+    let done = false, tries = 0; const fin = () => { if (!done) { done = true; cb && cb(); } };
+    const go = () => { try { pickVoice(); const u = new SpeechSynthesisUtterance(t.replace(/[¡¿]/g, '')); u.lang = VOICE ? VOICE.lang : 'es-ES'; if (VOICE) u.voice = VOICE; u.pitch = pitch; u.rate = rate; u.volume = 1;
+        u.onend = fin; u.onerror = e => { if (e && e.error === 'synthesis-failed' && VOICE && tries++ < 4) { BADV.add(VOICE.name); go(); } else if (!(e && (e.error === 'interrupted' || e.error === 'canceled'))) fin(); else fin(); };
+        UTT = u; speechSynthesis.resume(); speechSynthesis.speak(u); } catch (e) { fin(); } };
+    go(); setTimeout(fin, 2500 + t.length * 90);
   }, 80);
 }
 setInterval(() => { try { if (window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.resume(); } catch (e) {} }, 5000);
@@ -490,9 +495,9 @@ const SHOP = [
 ];
 let SHOPPING = false;
 function shop() {
-  SHOPPING = true; const m = $('modal'), list = SHOP.filter(s => s.show());
-  if (!list.length) return say([['chispa', '¡Me lo has comprado todo!'], ['chispa', 'Vuelve en el próximo capítulo.']]);
-  m.innerHTML = '<div class="card wide" style="border-color:#ff5ad8"><h2 style="color:#ff5ad8">TIENDA DE CHISPA</h2><div style="font:900 22px Orbitron;color:#ffe680">Tienes ' + G.coins + ' 🪙</div><div class="choice">' + list.map((s, i) => '<button data-i="' + i + '"' + (G.coins < s.p ? ' disabled' : '') + '><b>' + s.e + '</b>' + s.t + '<span class="pr">' + s.p + ' 🪙</span><small style="font-size:15px;color:#9fb4ff">' + s.d + '</small></button>').join('') + '</div><button class="btn" id="shX">ADIÓS</button></div>';
+  SHOPPING = true; L.serve = 1; const m = $('modal'), list = SHOP.filter(s => s.show());
+  if (!list.length) { SHOPPING = false; return say([['chispa', '¡Me lo has comprado todo!'], ['chispa', 'Vuelve en el próximo capítulo.']]); }
+  m.innerHTML = '<div class="card wide shopc" style="border-color:#ff5ad8"><h2 style="color:#ff5ad8">TIENDA DE CHISPA</h2><div style="font:900 22px Orbitron;color:#ffe680">Tienes ' + G.coins + ' 🪙</div><div class="choice">' + list.map((s, i) => '<button data-i="' + i + '"' + (G.coins < s.p ? ' disabled' : '') + '><b>' + s.e + '</b>' + s.t + '<span class="pr">' + s.p + ' 🪙</span><small style="font-size:15px;color:#9fb4ff">' + s.d + '</small></button>').join('') + '</div><button class="btn" id="shX">ADIÓS</button></div>';
   m.classList.add('on'); speak('¿Qué quieres comprar? Tienes ' + G.coins + ' monedas.');
   $('shX').onclick = () => { SHOPPING = false; m.classList.remove('on'); shutUp(); say([['chispa', '¡Hasta pronto, Lucas!']]); };
   m.querySelectorAll('[data-i]').forEach(b => b.onclick = () => { const s = list[+b.dataset.i]; if (G.coins < s.p) return; SHOPPING = false; G.coins -= s.p; paintCoins(); SFX.buy(); m.classList.remove('on'); shutUp();
@@ -594,13 +599,17 @@ function sceneEnd() { const [to, x, y] = SCENE.then; SCENE = null; enterRoom(to,
 /* ---------- controles: flechas, saltar, mano de acción, y tocar la pantalla ---------- */
 function near(h) { if (h.vis && !h.vis()) return false; const top = h.y != null ? h.y : R.floor - h.h, bot = h.y != null ? h.y + h.h : R.floor; return Math.abs(L.x - h.x) < h.w / 2 + 40 && L.y >= top - 20 && L.y <= bot + 34; }
 function nearest() { let b = null, bd = 1e9; for (const h of R.hot) { if (!h.act && !h.door) continue; if (!near(h)) continue; const d = Math.abs(L.x - h.x); if (d < bd) { bd = d; b = h; } } return b; }
-function act(h) { if (!h || TR || SCENE) return; SFX.click(); L.face = h.x >= L.x ? 1 : -1; if (h.door && !(h.door.locked && h.door.locked())) return enterDoor(h); if (h.act) h.act(); }
+// sitio donde se coloca Lucas para hablar: al lado del personaje (sin taparlo) o frente al mostrador, a un lado de Chispa
+function stand(h) { if (h.ch) return Math.max(80, Math.min(R.W - 80, h.x + (L.x < h.x ? -175 : 175))); if (h.id === 'mostr') return 650; return null; }
+function act(h) { if (!h || TR || SCENE) return; const sp = stand(h);
+  if (sp != null && (Math.abs(L.x - sp) > 25 || !L.ground)) { L.auto = sp; L.then = () => act(h); return; }
+  SFX.click(); L.face = h.x >= L.x ? 1 : -1; if (h.door && !(h.door.locked && h.door.locked())) return enterDoor(h); if (h.act) h.act(); }
 function doJump() { if (L.ground) { L.vy = -jumpV(); L.ground = false; SFX.jump(); } else jumpBuf = 0.15; }
 function hotAt(wx, wy) { for (let i = R.hot.length - 1; i >= 0; i--) { const h = R.hot[i]; if (h.vis && !h.vis()) continue; if (!h.act && !h.door) continue; const top = h.y != null ? h.y : R.floor - h.h, bot = h.y != null ? h.y + h.h : R.floor + 30; if (wx > h.x - h.w / 2 && wx < h.x + h.w / 2 && wy > top && wy < bot) return h; } return null; }
 function tapWorld(sx, sy) {
   if (TR || SCENE || L.enter) return; if (busy()) { advance(); return; }
   const wx = sx + camX, wy = sy, h = hotAt(wx, wy);
-  if (h && canSee(h.x)) { if (near(h)) return act(h); L.auto = h.x; L.then = () => { if (near(h)) act(h); else say([['lucas', '¡Está muy alto! Tengo que saltar.']]); }; return; }
+  if (h && canSee(h.x)) { if (near(h) || stand(h) != null) return act(h); L.auto = h.x; L.then = () => { if (near(h)) act(h); else say([['lucas', '¡Está muy alto! Tengo que saltar.']]); }; return; }
   for (const p of plats()) if (Math.abs(wy - p[1]) < 50 && Math.abs(wx - p[0]) < p[2] / 2 && p[1] < L.y - 20) { L.auto = Math.max(p[0] - p[2] / 2 + 30, Math.min(p[0] + p[2] / 2 - 30, wx)); L.then = doJump; return; }
   if (wy < L.y - LUCAS_H && Math.abs(wx - L.x) < 120) return doJump();
   L.auto = Math.max(70, Math.min(R.W - 70, wx)); L.then = null;
@@ -635,7 +644,7 @@ function update(dt) {
   // andar
   let dir = 0; const frozen = busy() || $('modal').classList.contains('on');
   if (!frozen) { dir = KEY.r - KEY.l; if (!dir && L.auto != null) { const d = L.auto - L.x; if (Math.abs(d) > 8) dir = Math.sign(d); else { L.auto = null; const f = L.then; L.then = null; if (f) f(); } } }
-  if (dir) L.face = dir;
+  if (dir) { L.face = dir; L.serve = 0; }
   let nx = L.x + dir * SPEED * dt; nx = Math.max(60, Math.min(R.W - 60, nx));
   if (R.dark && !F('energia') && !has('linterna') && nx > 440) { nx = 440; L.auto = null; if (time - darkSaid > 6 && !busy()) { darkSaid = time; say([['lucas', '¡Está muy oscuro! No veo nada.']]); } }
   L.x = nx; if (dir && L.ground) { L.walk = (L.walk || 0) + dt; if (Math.floor(L.walk * 4) !== Math.floor((L.walk - dt) * 4)) tone(90, 60, 0.05, 'sine', 0.02); }
@@ -702,7 +711,7 @@ function warpFx(k, cx, cy) {
   ctx.restore();
 }
 function drawLucas() {
-  const back = (SHOPPING || (DCUR && DCUR.who === 'chispa')) && opt('lucas-espaldas');
+  const back = R.id === 'tienda' && Math.abs(L.x - 650) < 30 && L.ground && !(KEY.l || KEY.r || L.auto != null) && (SHOPPING || busy() || L.serve) && opt('lucas-espaldas');
   const air = !L.ground, moving = (KEY.l || KEY.r || L.auto != null) && !busy(), name = L.cheer > 0 ? 'lucas-celebrando' : air ? 'lucas-saltando' : moving ? 'lucas-avanzando' : 'lucas-quieto';
   let im = back || IMG[name]; if (!ok(im)) im = IMG['lucas-quieto'];
   const sx = L.x - camX, y = L.y + 4, bob = air ? 0 : Math.sin(time * (moving ? 9 : 2.5)) * (moving ? 4 : 3), en = L.enter || 0;
