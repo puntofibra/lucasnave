@@ -1,7 +1,7 @@
 /* LUCAS Y LA NAVE PERDIDA · aventura de Lucas para niños de 6 y 7 años: se anda y se salta como en un plataformas, pero sin malos */
 (() => {
 'use strict';
-const VERSION = '0.5';
+const VERSION = '0.6';
 const API = 'https://script.google.com/macros/s/AKfycby5_qNFSRwDK-qZmzTWTD-O4p7XpdF2zgezm-8PM7xad66uavF7OS4sWafVRWQzN3pI/exec';
 const GOOGLE_ID = '454055120059-nuhaop4r62urc3u036cc3grpqo71ulg7.apps.googleusercontent.com';
 const $ = id => document.getElementById(id);
@@ -24,7 +24,7 @@ function img(n, src) { if (!IMG[n]) { const im = new Image(); im.src = src || ('
 const ok = im => im && im.complete && im.naturalWidth && !im._bad;
 ['lucas-quieto', 'lucas-avanzando', 'lucas-celebrando', 'lucas-saltando', 'suelo', 'obj-puerta', 'obj-chip'].forEach(n => img(n));
 // imágenes nuevas (PNG sin fondo que irán llegando): mientras no existan, se dibuja una versión provisional por código
-const HAVE = new Set(['pj-capi', 'pj-capi-2', 'pj-capi-dormida', 'pj-chef', 'pj-chef-2', 'pj-bolita', 'pj-bolita-2', 'pj-chispa', 'pj-chispa-2', 'pj-chispa-3', 'lucas-espaldas']);   // imágenes nuevas que ya existen (las demás se dibujan provisionales)
+const HAVE = new Set(['pj-capi', 'pj-capi-2', 'pj-capi-dormida', 'pj-chef', 'pj-chef-2', 'pj-bolita', 'pj-bolita-2', 'pj-chispa', 'pj-chispa-2', 'pj-chispa-3', 'lucas-espaldas', 'espacio-lejos', 'pared-camarote', 'pared-pasillo', 'pared-cocina', 'pared-invernadero', 'pared-maquinas', 'pared-puente', 'pared-tienda']);   // imágenes nuevas que ya existen (las demás se dibujan provisionales)
 function opt(n) { if (!HAVE.has(n)) return null; const im = img(n); return ok(im) ? im : null; }
 HAVE.forEach(n => img(n));
 
@@ -180,6 +180,13 @@ function frontPipes(seed, col = '#2a3460') {
     const h = 120 + (i * 37) % 110; ctx.fillStyle = lg(x, 0, x + 60, 0, ['#0a0e22', col, '#0a0e22']); ctx.fillRect(x, 0, 60, h); ctx.fillStyle = '#0a0e22'; ctx.fillRect(x - 8, h - 16, 76, 16); ctx.fillRect(x - 8, 50, 76, 12); }
 }
 
+/* ---------- capas con imagen: el espacio lejano (se mueve despacio) y la pared de cada sala (se repite a lo largo, en espejo para que no se noten las juntas) ---------- */
+function tile(im, H, par, y) { const w = H * im.naturalWidth / im.naturalHeight, off = camX * par; for (let i = Math.floor(off / w); i * w - off < VW; i++) { const x = i * w - off; if (i % 2) { ctx.save(); ctx.translate(x + w, y); ctx.scale(-1, 1); ctx.drawImage(im, 0, 0, w + 1, H); ctx.restore(); } else ctx.drawImage(im, x, y, w + 1, H); } }
+function layer(T, ly) {
+  if (ly === 'lejos') { const sp = T.id !== 'maquinas' && opt('espacio-lejos'); if (sp) return tile(sp, VH, 0.15, 0); return T.paint('lejos'); }
+  if (ly === 'pared') { const im = opt('pared-' + T.id); if (im) { tile(im, T.floor + 12, 1, 0); if (T.id === 'maquinas') { ctx.fillStyle = F('energia') ? 'rgba(20,255,120,.05)' : 'rgba(40,0,10,.25)'; ctx.fillRect(0, 0, VW, T.floor); } return; } return T.paint('pared'); }
+  T.paint(ly);
+}
 /* ---------- plataformas ---------- */
 function drawPlat(p) {
   const [x, y, w, k] = p, sx = x - camX - w / 2; if (k === 'none' || sx > VW + 20 || sx + w < -20) return;
@@ -223,7 +230,7 @@ function preview(to, x, y, w, h, tx) {
   ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
   R = T; const s = h / (T.floor + 60 - 120); camX = Math.max(0, Math.min(T.W - VW, (tx || 300) - VW / 2));
   ctx.translate(x + w / 2, y + h); ctx.scale(s, s); ctx.translate(-((tx || 300) - camX), -(T.floor + 60));
-  try { T.paint('lejos'); T.paint('pared'); T.paint('suelo'); plats().forEach(drawPlat); for (const k of T.hot) if (k.draw && !k.door && (!k.vis || k.vis())) k.draw(); } catch (e) {}
+  try { layer(T, 'lejos'); layer(T, 'pared'); T.paint('suelo'); plats().forEach(drawPlat); for (const k of T.hot) if (k.draw && !k.door && (!k.vis || k.vis())) k.draw(); } catch (e) {}
   if (T.dark && !F('energia')) { ctx.fillStyle = 'rgba(0,0,6,.9)'; ctx.fillRect(-5000, -5000, 10000, 10000); }
   ctx.restore(); R = sR; camX = sC; PREVIEW = false;
   ctx.fillStyle = 'rgba(255,255,255,.05)'; ctx.fillRect(x, y, w, h);
@@ -653,7 +660,7 @@ function update(dt) {
 
 /* ---------- pintar ---------- */
 function drawWorld() {
-  for (const ly of ['lejos', 'pared']) { const im = opt(R.id + '-' + ly); if (im) { if (ly === 'lejos') { const w = Math.max(VW + 300, VH * im.naturalWidth / im.naturalHeight); ctx.drawImage(im, -camX / Math.max(1, R.W - VW) * (w - VW), 0, w, VH); } else ctx.drawImage(im, -camX, 0, R.W, R.floor + 40); } else R.paint(ly); }
+  layer(R, 'lejos'); layer(R, 'pared');
   { const im = opt(R.id + '-suelo'); if (im) ctx.drawImage(im, -camX, R.floor - 30, R.W, VH - R.floor + 30); else R.paint('suelo'); }
   plats().forEach(drawPlat);
   for (const h of R.hot) if (h.draw && (!h.vis || h.vis()) && !h.ch) h.draw();
