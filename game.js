@@ -1,7 +1,7 @@
 /* LUCAS Y LA NAVE PERDIDA · aventura de Lucas para niños de 6 y 7 años: se anda y se salta como en un plataformas, pero sin malos */
 (() => {
 'use strict';
-const VERSION = '0.7';
+const VERSION = '0.8';
 const API = 'https://script.google.com/macros/s/AKfycby5_qNFSRwDK-qZmzTWTD-O4p7XpdF2zgezm-8PM7xad66uavF7OS4sWafVRWQzN3pI/exec';
 const GOOGLE_ID = '454055120059-nuhaop4r62urc3u036cc3grpqo71ulg7.apps.googleusercontent.com';
 const $ = id => document.getElementById(id);
@@ -585,7 +585,7 @@ function enterRoom(id, x, y) {
 function enterDoor(h) {
   if (TR || SCENE) return; const D = h.door;
   L.auto = h.x; L.then = () => { L.face = 1; door(D.id).to = 1; L.enter = 0.001; SFX.door();
-    setTimeout(() => { SFX.warp(); TR = { ph: 'out', t: 0, cx: h.x - camX, cy: R.floor - 160, D }; }, 380); };
+    setTimeout(() => { SFX.warp(); TR = { ph: "out", t: 0, cx: h.x - camX, cy: R.floor - 160, D }; }, 520); };
 }
 function enterVent(h) { if (TR || SCENE) return; L.enter = 0.001; SFX.door(); setTimeout(() => { SFX.warp(); TR = { ph: 'out', t: 0, cx: h.x - camX, cy: 180, D: { to: '__conducto' } }; }, 380); }
 function trMid() {
@@ -640,7 +640,7 @@ function update(dt) {
   if (FX.pop) { FX.pop = FX.pop.filter(p => (p.t -= dt) > 0); }
   if (SCENE) { SCENE.t += dt; if (SCENE.k === 'elev' && Math.random() < 0.1) tone(150, 160, 0.1, 'sine', 0.01); if (SCENE.t >= SCENE.dur) sceneEnd(); return; }
   if (TR) { TR.t += dt; if (TR.ph === 'out' && TR.t >= 0.75) trMid(); else if (TR && TR.ph === 'in' && TR.t >= 0.7) TR = null; if (TR && TR.ph === 'out') return; }
-  if (L.enter) { L.enter = Math.min(1, L.enter + dt * 2.6); return; }
+  if (L.enter) { L.enter = Math.min(1, L.enter + dt * 1.8); return; }
   // andar
   let dir = 0; const frozen = busy() || $('modal').classList.contains('on');
   if (!frozen) { dir = KEY.r - KEY.l; if (!dir && L.auto != null) { const d = L.auto - L.x; if (Math.abs(d) > 8) dir = Math.sign(d); else { L.auto = null; const f = L.then; L.then = null; if (f) f(); } } }
@@ -711,7 +711,7 @@ function warpFx(k, cx, cy) {
   ctx.restore();
 }
 function drawLucas() {
-  const back = R.id === 'tienda' && Math.abs(L.x - 650) < 30 && L.ground && !(KEY.l || KEY.r || L.auto != null) && (SHOPPING || busy() || L.serve) && opt('lucas-espaldas');
+  const back = L.enter > 0 && opt('lucas-espaldas');   // de espaldas solo al cruzar una puerta
   const air = !L.ground, moving = (KEY.l || KEY.r || L.auto != null) && !busy(), name = L.cheer > 0 ? 'lucas-celebrando' : air ? 'lucas-saltando' : moving ? 'lucas-avanzando' : 'lucas-quieto';
   let im = back || IMG[name]; if (!ok(im)) im = IMG['lucas-quieto'];
   const sx = L.x - camX, y = L.y + 4, bob = air ? 0 : Math.sin(time * (moving ? 9 : 2.5)) * (moving ? 4 : 3), en = L.enter || 0;
@@ -719,8 +719,8 @@ function drawLucas() {
   if (F('botas') && air) { ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 6; i++) glow(sx + (Math.random() - 0.5) * 50, y - 10 + Math.random() * 40, 16, 'rgba(120,255,140,A)', 0.6); ctx.globalCompositeOperation = 'source-over'; }
   ctx.globalCompositeOperation = 'lighter'; for (const s of [-1, 1]) { const fx = sx + s * 26, fl = 18 + Math.random() * 10 + (moving ? 8 : 0) + (air && L.vy < 0 ? 30 : 0); const g = ctx.createLinearGradient(0, y - 22, 0, y - 22 + fl); g.addColorStop(0, 'rgba(120,255,220,.9)'); g.addColorStop(1, 'rgba(41,160,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(fx - 9, y - 22); ctx.lineTo(fx + 9, y - 22); ctx.lineTo(fx, y - 22 + fl); ctx.fill(); }
   ctx.globalCompositeOperation = 'source-over';
-  if (!ok(im)) return; const sq = L.land > 0 ? 1 - L.land * 0.6 : 1, h = LUCAS_H * (L.talk ? 1 + Math.abs(Math.sin(time * 16)) * 0.012 : 1) * sq * (1 - en * 0.25), w = h * im.naturalWidth / im.naturalHeight / sq;
-  ctx.save(); ctx.globalAlpha = 1 - en * 0.9; ctx.translate(sx, y - 18 + bob - en * 30); if (L.face < 0) ctx.scale(-1, 1); ctx.drawImage(im, -w * (name === 'lucas-avanzando' ? 0.47 : 0.5), -h, w, h);
+  if (!ok(im)) return; const sq = L.land > 0 ? 1 - L.land * 0.6 : 1, h = LUCAS_H * (L.talk ? 1 + Math.abs(Math.sin(time * 16)) * 0.012 : 1) * sq * (1 - en * 0.18), w = h * im.naturalWidth / im.naturalHeight / sq;
+  ctx.save(); ctx.globalAlpha = en < 0.55 ? 1 : 1 - (en - 0.55) / 0.45 * 0.85; ctx.translate(sx, y - 18 + bob - en * 18); if (L.face < 0 && !back) ctx.scale(-1, 1); ctx.drawImage(im, -w * (name === 'lucas-avanzando' ? 0.47 : 0.5), -h, w, h);
   if (F('gorro')) { const hy = -h + 4; ctx.fillStyle = '#ff3a6a'; ctx.beginPath(); ctx.arc(0, hy + 6, 30, Math.PI, 0); ctx.fill(); stroke('#0a0e22', 3); ctx.fillStyle = '#ffd23c'; ctx.fillRect(-36, hy + 2, 72, 8); ctx.fillRect(-2, hy - 34, 4, 14); const pw = Math.cos(time * 20) * 34; ctx.fillStyle = '#29e6ff'; ctx.fillRect(-Math.abs(pw), hy - 38, Math.abs(pw) * 2, 6); }
   ctx.restore();
 }
