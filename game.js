@@ -1,7 +1,7 @@
 /* LUCAS Y LA NAVE PERDIDA · aventura de Lucas para niños de 6 y 7 años: se anda y se salta como en un plataformas, pero sin malos */
 (() => {
 'use strict';
-const VERSION = '0.4';
+const VERSION = '0.5';
 const API = 'https://script.google.com/macros/s/AKfycby5_qNFSRwDK-qZmzTWTD-O4p7XpdF2zgezm-8PM7xad66uavF7OS4sWafVRWQzN3pI/exec';
 const GOOGLE_ID = '454055120059-nuhaop4r62urc3u036cc3grpqo71ulg7.apps.googleusercontent.com';
 const $ = id => document.getElementById(id);
@@ -74,12 +74,23 @@ function startMusic() {
 let VOICE = null;
 function pickVoice() { try { const vs = speechSynthesis.getVoices(); VOICE = vs.find(v => /es[-_]ES/i.test(v.lang) && /female|mujer|helena|elvira|monica|lucia|google/i.test(v.name)) || vs.find(v => /es[-_]ES/i.test(v.lang)) || vs.find(v => /^es/i.test(v.lang)) || null; } catch (e) {} }
 try { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; } catch (e) {}
+let UTT = null, speakT = 0, VOZ_OK = false;
+// desbloquea la voz con el primer toque (los móviles no dejan hablar si no ha habido un toque antes)
+function unlockVoice() { if (VOZ_OK || !window.speechSynthesis) return; VOZ_OK = true; try { pickVoice(); const u = new SpeechSynthesisUtterance(' '); u.volume = 0; u.lang = 'es-ES'; speechSynthesis.speak(u); speechSynthesis.resume(); } catch (e) {} }
+['pointerdown', 'keydown', 'touchend'].forEach(ev => addEventListener(ev, unlockVoice, { capture: true }));
 function speak(t, pitch = 1.05, rate = 0.92, cb) {
-  try { speechSynthesis.cancel(); } catch (e) {}
+  clearTimeout(speakT);
   if (!VOZ_ON || !window.speechSynthesis) { if (cb) setTimeout(cb, 400); return; }
-  try { const u = new SpeechSynthesisUtterance(t.replace(/[¡¿]/g, '')); u.lang = 'es-ES'; if (VOICE) u.voice = VOICE; u.pitch = pitch; u.rate = rate; u.onend = () => cb && cb(); u.onerror = () => cb && cb(); speechSynthesis.speak(u); } catch (e) { if (cb) cb(); }
+  try { if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); } catch (e) {}
+  // pequeña espera tras cancelar: en Chrome, hablar justo después de cancelar a veces no suena
+  speakT = setTimeout(() => {
+    try { if (!VOICE) pickVoice(); const u = new SpeechSynthesisUtterance(t.replace(/[¡¿]/g, '')); u.lang = VOICE ? VOICE.lang : 'es-ES'; if (VOICE) u.voice = VOICE; u.pitch = pitch; u.rate = rate; u.volume = 1;
+      let done = false; const fin = () => { if (!done) { done = true; cb && cb(); } }; u.onend = fin; u.onerror = fin; UTT = u; speechSynthesis.resume(); speechSynthesis.speak(u);
+      setTimeout(fin, 1500 + t.length * 90); } catch (e) { if (cb) cb(); }
+  }, 80);
 }
-function shutUp() { try { speechSynthesis.cancel(); } catch (e) {} }
+setInterval(() => { try { if (window.speechSynthesis && speechSynthesis.speaking) speechSynthesis.resume(); } catch (e) {} }, 5000);
+function shutUp() { clearTimeout(speakT); try { if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel(); } catch (e) {} }
 
 /* ---------- estado de la partida ---------- */
 const NEW = () => ({ v: 2, room: 'camarote', x: 520, inv: [], flags: {}, chips: {}, got: {}, coins: 0, seen: {}, t0: Date.now() });
