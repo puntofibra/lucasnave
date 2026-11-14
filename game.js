@@ -1,7 +1,7 @@
 /* LUCAS Y LA NAVE PERDIDA · aventura de Lucas para niños de 6 y 7 años: se anda y se salta como en un plataformas, pero sin malos */
 (() => {
 'use strict';
-const VERSION = '1.6';
+const VERSION = '1.7';
 const API = 'https://script.google.com/macros/s/AKfycby5_qNFSRwDK-qZmzTWTD-O4p7XpdF2zgezm-8PM7xad66uavF7OS4sWafVRWQzN3pI/exec';
 const GOOGLE_ID = '454055120059-nuhaop4r62urc3u036cc3grpqo71ulg7.apps.googleusercontent.com';
 const $ = id => document.getElementById(id);
@@ -194,14 +194,33 @@ function frontPipes(seed, col = '#2a3460') {
 }
 
 /* ---------- capas con imagen: el espacio lejano (se mueve despacio) y la pared de cada sala (se repite a lo largo, en espejo para que no se noten las juntas) ---------- */
-function tile(im, H, par, y) { const w = H * im.naturalWidth / im.naturalHeight, off = camX * par; for (let i = Math.floor(off / w); i * w - off < VW; i++) { const x = i * w - off; if (i % 2) { ctx.save(); ctx.translate(x + w, y); ctx.scale(-1, 1); ctx.drawImage(im, 0, 0, w + 1, H); ctx.restore(); } else ctx.drawImage(im, x, y, w + 1, H); } }
+function tile(im, H, par, y, flat) { const w = H * im.naturalWidth / im.naturalHeight, off = camX * par; for (let i = Math.floor(off / w); i * w - off < VW; i++) { const x = i * w - off; if (i % 2 && !flat) { ctx.save(); ctx.translate(x + w, y); ctx.scale(-1, 1); ctx.drawImage(im, 0, 0, w + 1, H); ctx.restore(); } else ctx.drawImage(im, x, y, w + 1, H); } }
 function layer(T, ly) {
   if (ly === 'lejos') { const sp = T.id !== 'maquinas' && !T.pl && opt('espacio-lejos'); if (sp) return tile(sp, VH, 0.15, 0);
     const cielo = T.pl && T.paint.out && opt('cielo-' + T.pl); if (cielo) { tile(cielo, VH, 0.08, 0); const mo = opt('montes-' + T.pl); if (mo) { const h = VH * 0.55; tile(mo, h, 0.35, T.floor + 20 - h); } return; }
     return T.paint('lejos'); }
   if (ly === 'suelo' && T.pl && T.paint.out) { const sg = opt('suelo-' + T.pl); if (sg) { tile(sg, VH - T.floor + 40, 1, T.floor - 40); T.paint.extra && T.paint.extra(); return; } }
-  if (ly === 'pared') { const im = opt('pared-' + T.id); if (im) { tile(im, T.floor + 12, 1, 0); if (T.id === 'maquinas') { ctx.fillStyle = F('energia') ? 'rgba(20,255,120,.05)' : 'rgba(40,0,10,.25)'; ctx.fillRect(0, 0, VW, T.floor); } return; } return T.paint('pared'); }
+  if (ly === 'pared') { const im = opt('pared-' + T.id); if (im) { tile(im, T.floor + 12, 1, 0, true); if (WINS[T.id]) drawWins(T, WINS[T.id]); if (T.id === 'maquinas') { ctx.fillStyle = F('energia') ? 'rgba(20,255,120,.05)' : 'rgba(40,0,10,.25)'; ctx.fillRect(0, 0, VW, T.floor); } return; } return T.paint('pared'); }
   T.paint(ly);
+}
+/* ---------- ventanas colocadas a mano encima de la pared lisa (por ellas se ve el espacio) ---------- */
+const WINS = {
+  camarote: [{ x: 760, y: 110, w: 290, h: 290, r: 1 }],
+  pasillo: [{ x: 400, y: 150, w: 210, h: 130 }, { x: 2800, y: 150, w: 210, h: 130 }],
+  cocina: [{ x: 860, y: 120, w: 210, h: 210, r: 1 }],
+  invernadero: [{ x: 700, y: 90, w: 600, h: 310, arc: 1 }, { x: 1620, y: 90, w: 440, h: 310, arc: 1 }],
+  puente: [{ x: 560, y: 100, w: 620, h: 290 }, { x: 1440, y: 100, w: 520, h: 290 }]
+};
+function winPath(o, x0) { const x = x0 - o.w / 2; ctx.beginPath(); if (o.r) ctx.arc(x0, o.y + o.h / 2, o.w / 2, 0, 7); else if (o.arc) { ctx.moveTo(x, o.y + o.h); ctx.lineTo(x, o.y + o.w / 4); ctx.quadraticCurveTo(x0, o.y - o.w / 6, x + o.w, o.y + o.w / 4); ctx.lineTo(x + o.w, o.y + o.h); ctx.closePath(); } else rr(x, o.y, o.w, o.h, 24); }
+function drawWins(T, list) {
+  const hue = { camarote: 235, pasillo: 250, cocina: 300, invernadero: 170, puente: 215 }[T.id] || 230;
+  for (const o of list) { const x0 = o.x - camX; if (x0 + o.w < -50 || x0 - o.w > VW + 50) continue; const vi = opt(o.r ? 'ventana-redonda' : o.arc ? 'cristalera' : T.id === 'puente' ? 'ventanal' : 'ventana-rectangular');
+    ctx.save(); winPath(o, x0); ctx.clip(); { const sp = opt('espacio-lejos'); if (sp) tile(sp, VH, 0.15, 0); else space(0.15, hue, o.w > 250); } ctx.restore();
+    if (vi) { ctx.drawImage(vi, x0 - o.w / 2 - o.w * 0.08, o.y - o.h * 0.08, o.w * 1.16, o.h * 1.16); continue; }
+    winPath(o, x0); ctx.lineWidth = 18; ctx.strokeStyle = T.id === 'invernadero' ? '#2a7a4a' : T.id === 'puente' ? '#e8f0ff' : '#5a6a90'; ctx.stroke(); ctx.lineWidth = 4; ctx.strokeStyle = '#0a0e22'; ctx.stroke();
+    ctx.save(); winPath(o, x0); ctx.clip(); ctx.fillStyle = 'rgba(200,240,255,.08)'; ctx.beginPath(); ctx.moveTo(x0 - o.w / 2 + 30, o.y); ctx.lineTo(x0 - o.w / 2 + 90, o.y); ctx.lineTo(x0 - o.w / 2 + 30, o.y + o.h); ctx.lineTo(x0 - o.w / 2 - 30, o.y + o.h); ctx.fill();
+    if (o.arc || T.id === 'puente') { ctx.strokeStyle = T.id === 'puente' ? '#e8f0ff' : '#2a7a4a'; ctx.lineWidth = 10; for (let k = 1; k < 3; k++) { const xx = x0 - o.w / 2 + o.w * k / 3; ctx.beginPath(); ctx.moveTo(xx, o.y - 40); ctx.lineTo(xx, o.y + o.h); ctx.stroke(); } } ctx.restore();
+    if (o.r) { ctx.fillStyle = '#c8d4f0'; for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5; ctx.beginPath(); ctx.arc(x0 + Math.cos(a) * (o.w / 2 + 2), o.y + o.h / 2 + Math.sin(a) * (o.w / 2 + 2), 4, 0, 7); ctx.fill(); } } }
 }
 /* ---------- plataformas ---------- */
 function drawPlat(p) {
@@ -372,7 +391,7 @@ room('camarote', {
   hot: [
     { id: 'cama', x: 330, w: 320, h: 160, ic: '✋', draw: () => drawProp('cama', 330),
       act() { if (!F('tarjeta')) say([['lucas', '¿Qué hay debajo de la almohada?'], ['lucas', '¡Una tarjeta!']], () => { give('tarjeta'); setF('tarjeta'); say([['narr', '¡Lucas tiene una tarjeta! Mira tu mochila, abajo.']]); }); else say([['lucas', 'Mi cama. ¡Y se puede saltar encima!']]); } },
-    { id: 'ventana', x: 1060, w: 400, h: 290, y: 110, ic: '👁', act() { say([['narr', 'Por la ventana se ven estrellas. ¡Y un planeta con anillos!'], ['lucas', 'No conozco ese planeta. ¡Estamos perdidos!']]); } },
+    { id: 'ventana', x: 760, w: 290, h: 290, y: 110, ic: '👁', act() { say([['narr', 'Por la ventana se ven estrellas. ¡Y un planeta con anillos!'], ['lucas', 'No conozco ese planeta. ¡Estamos perdidos!']]); } },
     { id: 'taquilla', x: 1390, w: 150, h: 310, ic: '✋', draw: () => drawProp('taquilla', 1390, F('taquilla') ? 'abierta' : ''),
       act() { if (!F('taquilla')) { setF('taquilla'); SFX.door(); say([['lucas', '¡Mi taquilla! Voy a abrirla.'], ['lucas', '¡Una linterna!']], () => { give('linterna'); say([['narr', 'La linterna sirve para ver en sitios oscuros.']]); }); } else say([['lucas', 'Ya está vacía.']]); } },
     { id: 'puerta', x: 1610, w: 220, h: 330, ic: '🚪', door: dk('cam', 'pasillo', 180, 'PASILLO', () => !F('camAbierta')), draw() { drawDoor(this); },
