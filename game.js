@@ -1,7 +1,7 @@
 /* LUCAS Y LA NAVE PERDIDA · aventura de Lucas para niños de 6 y 7 años: se anda y se salta como en un plataformas, pero sin malos */
 (() => {
 'use strict';
-const VERSION = '1.5';
+const VERSION = '1.6';
 const API = 'https://script.google.com/macros/s/AKfycby5_qNFSRwDK-qZmzTWTD-O4p7XpdF2zgezm-8PM7xad66uavF7OS4sWafVRWQzN3pI/exec';
 const GOOGLE_ID = '454055120059-nuhaop4r62urc3u036cc3grpqo71ulg7.apps.googleusercontent.com';
 const $ = id => document.getElementById(id);
@@ -304,10 +304,11 @@ function drawBot(id, x, o) {
 
 /* ---------- objetos provisionales ---------- */
 const PROP_H = { cama: 270, taquilla: 330, nevera: 330, cocina: 230, grifo: 230, planta: 470, generador: 330, ascensor: 400, panel: 200, pantalla: 480, escoba: 210, regadera: 90, manzana: 64, mostrador: 185, rejilla: 120 };
+const PROP_SINK = { cama: 46 }, PROP_FLIP = { cama: !HAVE.has('obj-cama-lado') };
 function drawProp(kind, x, st, yy) {
   const pi = opt('obj-' + kind + (st ? '-' + st : '')) || (st === 'agua' ? opt('obj-' + kind) : null), sx = x - camX, y = yy != null ? yy : R.floor;
   if (sx < -400 || sx > VW + 400) return;
-  if (pi) { const h = PROP_H[kind] || 200, w = h * pi.naturalWidth / pi.naturalHeight, sink = yy == null ? 24 : 8; if (yy == null) { ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(sx, y + 20, w * 0.45, 12, 0, 0, 7); ctx.fill(); } ctx.drawImage(pi, sx - w / 2, y - h + sink, w, h); if (st === 'agua') { ctx.fillStyle = '#29a8ff'; ctx.fillRect(sx - 6, y - h * 0.18, 12, h * 0.18 + 6 * Math.sin(time * 20)); } return; }
+  if (pi) { const h = PROP_H[kind] || 200, w = h * pi.naturalWidth / pi.naturalHeight, sink = yy == null ? (PROP_SINK[kind] || 24) : 8; if (yy == null) { ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(sx, y + sink - 4, w * 0.45, 14, 0, 0, 7); ctx.fill(); } if (PROP_FLIP[kind]) { ctx.save(); ctx.translate(sx, 0); ctx.scale(-1, 1); ctx.drawImage(pi, -w / 2, y - h + sink, w, h); ctx.restore(); } else ctx.drawImage(pi, sx - w / 2, y - h + sink, w, h); if (st === 'agua') { ctx.fillStyle = '#29a8ff'; ctx.fillRect(sx - 6, y - h * 0.18, 12, h * 0.18 + 6 * Math.sin(time * 20)); } return; }
   ctx.save(); ctx.translate(sx, y);
   if (kind === 'cama') { ctx.fillStyle = lg(0, -120, 0, 0, ['#5a6aa0', '#2a3460']); rr(-160, -110, 320, 100, 20); ctx.fill(); stroke(); ctx.fillStyle = '#9fb4ff'; rr(-150, -130, 300, 40, 16); ctx.fill(); stroke(); ctx.fillStyle = '#fff'; rr(-140, -150, 90, 36, 16); ctx.fill(); stroke(); }
   else if (kind === 'taquilla') { ctx.fillStyle = lg(-70, 0, 70, 0, ['#3a4a7a', '#6a7ab0', '#3a4a7a']); rr(-70, -300, 140, 300, 12); ctx.fill(); stroke(); if (st === 'abierta') { ctx.fillStyle = '#0a0e22'; rr(-60, -290, 120, 280, 8); ctx.fill(); ctx.fillStyle = '#5a6aa0'; ctx.fillRect(-60, -170, 120, 8); } else { ctx.fillStyle = '#0a0e22'; for (let i = 0; i < 4; i++) ctx.fillRect(-40, -270 + i * 14, 80, 6); ctx.fillStyle = '#ffd23c'; ctx.beginPath(); ctx.arc(50, -150, 7, 0, 7); ctx.fill(); } }
@@ -364,7 +365,7 @@ const CHIP_ROOMS = ['camarote', 'pasillo', 'tienda', 'cocina', 'invernadero', 'm
 const dk = (id, to, tx, label, locked, extra) => Object.assign({ id, to, tx, label, locked }, extra || {});
 room('camarote', {
   name: 'EL CAMAROTE', W: 1750,
-  plat: [[330, 478, 280, 'none'], [1100, 530, 110, 'caja'], [1235, 440, 110, 'caja'], [1390, 296, 140, 'none']],
+  plat: [[330, 500, 270, 'none'], [1100, 530, 110, 'caja'], [1235, 440, 110, 'caja'], [1390, 296, 140, 'none']],
   coins: [[250, 420], [410, 420], [1100, 480], [1235, 390], [700, 560], [900, 560]],
   chip: [1390, 230],
   paint(l) { if (l === 'lejos') return space(0.15, 235); if (l === 'pared') return wall('#2a3a7a', '#141c44', [[860, 110, 400, 290]]); if (l === 'suelo') return floorDraw(); if (l === 'delante') return frontPipes(1); },
