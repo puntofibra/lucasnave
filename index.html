@@ -124,6 +124,9 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none
 .shopc .choice button b{font-size:42px}
 .shopc .choice small{display:none}
 #modal:has(.shopc){background:none}
+#ctl.pc #bL,#ctl.pc #bR,#ctl.pc #bJ{display:none}
+#ctl.pc #bAct{right:18px;width:90px;height:90px;font-size:38px}
+#ctl.pc #bAct:after{content:'E';position:absolute;bottom:-6px;right:-6px;width:30px;height:30px;border-radius:9px;background:#0a0e22;border:2px solid var(--gold);font:900 18px Orbitron;display:flex;align-items:center;justify-content:center;color:#ffe680}
 </style>
 </head>
 <body>
@@ -155,6 +158,6 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none
 <div id="con"><div id="conOut"></div><div id="conRow"><span>&gt;</span><input id="conIn" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn sm" id="conX">SALIR</button></div></div>
 <div id="adm"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-<script src="game.js?v=12"></script>
+<script src="game.js?v=15"></script>
 </body>
 </html>

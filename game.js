@@ -1,7 +1,7 @@
 /* LUCAS Y LA NAVE PERDIDA · aventura de Lucas para niños de 6 y 7 años: se anda y se salta como en un plataformas, pero sin malos */
 (() => {
 'use strict';
-const VERSION = '1.2';
+const VERSION = '1.5';
 const API = 'https://script.google.com/macros/s/AKfycby5_qNFSRwDK-qZmzTWTD-O4p7XpdF2zgezm-8PM7xad66uavF7OS4sWafVRWQzN3pI/exec';
 const GOOGLE_ID = '454055120059-nuhaop4r62urc3u036cc3grpqo71ulg7.apps.googleusercontent.com';
 const $ = id => document.getElementById(id);
@@ -207,7 +207,11 @@ function layer(T, ly) {
 function drawPlat(p) {
   const [x, y, w, k] = p, sx = x - camX - w / 2; if (k === 'none' || sx > VW + 20 || sx + w < -20) return;
   const im = opt('plat-' + (k || 'metal')); if (im) { const h = w * im.naturalHeight / im.naturalWidth; ctx.drawImage(im, sx, y - 10, w, h); return; }
-  if (k === 'caja') { const h = R.floor - y; ctx.fillStyle = lg(sx, 0, sx + w, 0, ['#8a5a2a', '#c88a4a', '#8a5a2a']); rr(sx, y, w, h, 6); ctx.fill(); stroke(); ctx.strokeStyle = 'rgba(40,20,0,.6)'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(sx + 8, y + 8); ctx.lineTo(sx + w - 8, y + h - 8); ctx.moveTo(sx + w - 8, y + 8); ctx.lineTo(sx + 8, y + h - 8); ctx.stroke(); ctx.fillStyle = '#ffd23c'; ctx.font = '900 20px Orbitron'; ctx.textAlign = 'center'; return; }
+  if (k === 'caja') { const h = R.floor + 6 - y; ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(x - camX, R.floor + 10, w * 0.55, 10, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = lg(sx, 0, sx + w, 0, ['#4a5a88', '#7a8ab8', '#4a5a88']); rr(sx, y, w, h, 8); ctx.fill(); stroke();
+    ctx.fillStyle = '#2a3460'; ctx.fillRect(sx + 6, y + 6, w - 12, 10); ctx.fillRect(sx + 6, y + h - 16, w - 12, 10);
+    ctx.save(); rr(sx + 10, y + h / 2 - 12, w - 20, 24, 4); ctx.clip(); ctx.fillStyle = '#ffd23c'; ctx.fillRect(sx, y + h / 2 - 12, w, 24); ctx.fillStyle = '#1a1a1a'; for (let i = -30; i < w; i += 22) { ctx.beginPath(); ctx.moveTo(sx + i, y + h / 2 + 12); ctx.lineTo(sx + i + 12, y + h / 2 - 12); ctx.lineTo(sx + i + 22, y + h / 2 - 12); ctx.lineTo(sx + i + 10, y + h / 2 + 12); ctx.fill(); } ctx.restore();
+    ctx.fillStyle = '#c8d4f0'; for (const [a, b] of [[12, 22], [w - 12, 22], [12, h - 22], [w - 12, h - 22]]) { ctx.beginPath(); ctx.arc(sx + a, y + b, 4, 0, 7); ctx.fill(); } return; }
   if (k === 'hielo') { ctx.fillStyle = lg(0, y, 0, y + 50, ['#ffffff', '#bfe4ff', '#7ab4e0']); rr(sx, y, w, 50, 10); ctx.fill(); stroke('#4a7ab0', 4); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillRect(sx + 12, y + 8, w * 0.4, 6); return; }
   if (k === 'roca') { ctx.fillStyle = lg(0, y, 0, y + 46, ['#8a6a5a', '#4a3a30']); ctx.beginPath(); ctx.moveTo(sx + 10, y); ctx.lineTo(sx + w - 10, y); ctx.lineTo(sx + w, y + 30); ctx.lineTo(sx + w - 20, y + 46); ctx.lineTo(sx + 20, y + 46); ctx.lineTo(sx, y + 26); ctx.closePath(); ctx.fill(); stroke('#2a1a10', 4); return; }
   if (k === 'rama') { ctx.fillStyle = lg(0, y, 0, y + 30, ['#9a6a3a', '#5a3a1a']); rr(sx, y, w, 28, 14); ctx.fill(); stroke('#3a2010', 4); ctx.fillStyle = '#3aa04a'; ctx.beginPath(); ctx.ellipse(sx + w - 10, y - 6, 26, 12, -0.4, 0, 7); ctx.ellipse(sx + 14, y - 4, 20, 10, 0.4, 0, 7); ctx.fill(); return; }
@@ -226,6 +230,13 @@ function drawCoin(x, y, i) { const im = opt('obj-moneda'), sx = x - camX, w = Ma
   if (w > 18) { ctx.fillStyle = '#a86a00'; ctx.font = '900 18px Orbitron'; ctx.textAlign = 'center'; ctx.fillText('L', sx, y + b + 7); } }
 function drawChip(id, x, y) { if (G.chips[id]) return; const C = IMG['obj-chip'], s = 48 + Math.sin(time * 4) * 3, sx = x - camX; if (!PREVIEW) glow(sx, y, 56, 'rgba(255,210,60,A)', 0.35 + 0.2 * Math.sin(time * 5)); if (ok(C)) ctx.drawImage(C, sx - s / 2, y - s / 2, s, s); else { ctx.fillStyle = '#ffd23c'; ctx.beginPath(); ctx.arc(sx, y, s / 2, 0, 7); ctx.fill(); } }
 
+function doorPanel(cx, y, dh, pw) {    // trozo de pared lisa (metal) alrededor de la puerta, hasta el techo
+  const top = 48, x = cx - pw / 2, bot = R.floor + 2;
+  ctx.fillStyle = lg(x, 0, x + pw, 0, ['#1a2448', '#33426e', '#2a3860', '#1a2448']); ctx.fillRect(x, top, pw, bot - top);
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(x, top, 8, bot - top); ctx.fillRect(x + pw - 8, top, 8, bot - top);
+  ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(x + 8, top, 4, bot - top); ctx.fillStyle = '#0a0e22'; ctx.fillRect(x, top, pw, 6);
+  ctx.fillStyle = '#5a6a9a'; for (let yy = top + 30; yy < bot - 20; yy += 90) { ctx.beginPath(); ctx.arc(x + 20, yy, 4, 0, 7); ctx.arc(x + pw - 20, yy, 4, 0, 7); ctx.fill(); }
+}
 /* ---------- puertas: se abren deslizando sus dos mitades y dejan ver lo que hay dentro ---------- */
 const DOORS = {};
 const door = id => DOORS[id] || (DOORS[id] = { o: 0, to: 0 });
@@ -234,6 +245,7 @@ function drawDoor(h) {
   const D = h.door, d = door(D.id), P = D.style ? null : IMG['obj-puerta'], dh = D.h || 330, w = D.w || 220, y = R.floor - dh, sx = h.x - w / 2 - camX, locked = D.locked && D.locked();
   if (sx > VW + 60 || sx + w < -60) return;
   const op = Math.min(1, Math.max(0, d.o)), half = w / 2, sh = half * op;
+  if (!D.style) doorPanel(sx + w / 2, y, dh, D.id === 'asc' || D.id === 'uasc' ? 330 : 300);
   const fr = D.style ? null : (D.id === 'asc' || D.id === 'uasc') ? 'obj-ascensor-' : 'puerta-', fi = fr && opt(fr + (fr === 'puerta-' ? Math.min(4, 1 + Math.round(op * 3)) : Math.min(3, 1 + Math.round(op * 2))));
   { const ih = fr === 'puerta-' ? dh + 20 : dh, iw = fi ? ih * fi.naturalWidth / fi.naturalHeight * 0.74 : w - 12, px = sx + w / 2 - iw / 2, py = fi ? y + dh - ih * 0.88 : y + 6, ph = fi ? ih * 0.8 : dh - 6;
     if (fr !== 'obj-ascensor-' || !fi) { if (op > 0.02 && !PREVIEW) { preview(D.to, px, py, iw, ph, D.tx); glow(sx + w / 2, y + dh - 60, 180, 'rgba(160,240,255,A)', 0.22 * op); }
@@ -295,7 +307,7 @@ const PROP_H = { cama: 270, taquilla: 330, nevera: 330, cocina: 230, grifo: 230,
 function drawProp(kind, x, st, yy) {
   const pi = opt('obj-' + kind + (st ? '-' + st : '')) || (st === 'agua' ? opt('obj-' + kind) : null), sx = x - camX, y = yy != null ? yy : R.floor;
   if (sx < -400 || sx > VW + 400) return;
-  if (pi) { const h = PROP_H[kind] || 200, w = h * pi.naturalWidth / pi.naturalHeight; ctx.drawImage(pi, sx - w / 2, y - h + 8, w, h); if (st === 'agua') { ctx.fillStyle = '#29a8ff'; ctx.fillRect(sx - 6, y - h * 0.18, 12, h * 0.18 + 6 * Math.sin(time * 20)); } return; }
+  if (pi) { const h = PROP_H[kind] || 200, w = h * pi.naturalWidth / pi.naturalHeight, sink = yy == null ? 24 : 8; if (yy == null) { ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(sx, y + 20, w * 0.45, 12, 0, 0, 7); ctx.fill(); } ctx.drawImage(pi, sx - w / 2, y - h + sink, w, h); if (st === 'agua') { ctx.fillStyle = '#29a8ff'; ctx.fillRect(sx - 6, y - h * 0.18, 12, h * 0.18 + 6 * Math.sin(time * 20)); } return; }
   ctx.save(); ctx.translate(sx, y);
   if (kind === 'cama') { ctx.fillStyle = lg(0, -120, 0, 0, ['#5a6aa0', '#2a3460']); rr(-160, -110, 320, 100, 20); ctx.fill(); stroke(); ctx.fillStyle = '#9fb4ff'; rr(-150, -130, 300, 40, 16); ctx.fill(); stroke(); ctx.fillStyle = '#fff'; rr(-140, -150, 90, 36, 16); ctx.fill(); stroke(); }
   else if (kind === 'taquilla') { ctx.fillStyle = lg(-70, 0, 70, 0, ['#3a4a7a', '#6a7ab0', '#3a4a7a']); rr(-70, -300, 140, 300, 12); ctx.fill(); stroke(); if (st === 'abierta') { ctx.fillStyle = '#0a0e22'; rr(-60, -290, 120, 280, 8); ctx.fill(); ctx.fillStyle = '#5a6aa0'; ctx.fillRect(-60, -170, 120, 8); } else { ctx.fillStyle = '#0a0e22'; for (let i = 0; i < 4; i++) ctx.fillRect(-40, -270 + i * 14, 80, 6); ctx.fillStyle = '#ffd23c'; ctx.beginPath(); ctx.arc(50, -150, 7, 0, 7); ctx.fill(); } }
@@ -323,13 +335,13 @@ function drawProp(kind, x, st, yy) {
   ctx.restore();
 }
 
-function drawCajon(x) { const im = opt('obj-cajon'), sx = x - camX, y = R.floor; if (im) { const h = 150, w = h * im.naturalWidth / im.naturalHeight; ctx.drawImage(im, sx - w / 2, y - h + 6, w, h); return; }
+function drawCajon(x) { const im = opt('obj-cajon'), sx = x - camX, y = R.floor; if (im) { const h = 150, w = h * im.naturalWidth / im.naturalHeight; ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(sx, y + 20, w * 0.45, 12, 0, 0, 7); ctx.fill(); ctx.drawImage(im, sx - w / 2, y - h + 22, w, h); return; }
   ctx.fillStyle = lg(sx - 80, 0, sx + 80, 0, ['#4a5068', '#8a90a8', '#4a5068']); rr(sx - 80, y - 140, 160, 140, 10); ctx.fill(); stroke(); ctx.fillStyle = '#2a2e40'; ctx.fillRect(sx - 80, y - 100, 160, 10); ctx.fillRect(sx - 80, y - 46, 160, 10);
   ctx.fillStyle = '#ffd23c'; ctx.font = '900 18px Orbitron'; ctx.textAlign = 'center'; ctx.fillText('NO ABRIR', sx, y - 62); ctx.fillStyle = '#0a0e22'; for (const [a, b] of [[-66, -126], [66, -126], [-66, -14], [66, -14]]) { ctx.beginPath(); ctx.arc(sx + a, y + b, 5, 0, 7); ctx.fill(); } }
 /* ---------- fachada de la tienda: escaparate con el interior a la vista ---------- */
 function drawShopFront(x) {
   const sx = x - camX, top = R.floor - 470; if (sx < -500 || sx > VW + 500) return;
-  const FI = opt('casa-tienda-nave'); if (FI) { const H = 470, W = H * FI.naturalWidth / FI.naturalHeight;
+  const FI = opt('casa-tienda-nave'); if (FI) { const H = 470, W = H * FI.naturalWidth / FI.naturalHeight; doorPanel(sx, top, H, W + 40);
     preview('tienda', sx - W * 0.42, top + H * 0.3, W * 0.84, H * 0.62, 880); ctx.drawImage(FI, sx - W / 2, R.floor - H, W, H);
     const on = Math.sin(time * 9) > -0.85 || Math.random() > 0.3; ctx.font = '900 32px Orbitron'; ctx.textAlign = 'center'; if (on) { ctx.shadowColor = '#ff5ad8'; ctx.shadowBlur = PREVIEW ? 0 : 20; } ctx.fillStyle = on ? '#ffe6fa' : '#8a5a8a'; ctx.fillText('TIENDA DE CHISPA', sx, top + H * 0.15); ctx.shadowBlur = 0; return true; }
   ctx.fillStyle = lg(0, top, 0, R.floor, ['#4a2a8a', '#1a0a3a']); rr(sx - 330, top, 660, 470, 20); ctx.fill(); stroke('#0a0e22', 5);
@@ -352,9 +364,9 @@ const CHIP_ROOMS = ['camarote', 'pasillo', 'tienda', 'cocina', 'invernadero', 'm
 const dk = (id, to, tx, label, locked, extra) => Object.assign({ id, to, tx, label, locked }, extra || {});
 room('camarote', {
   name: 'EL CAMAROTE', W: 1750,
-  plat: [[330, 478, 280, 'none'], [640, 400, 200, 'estante'], [1000, 470, 170], [1200, 340, 170]],
-  coins: [[250, 440], [410, 440], [600, 350], [680, 350], [1000, 420], [1200, 290]],
-  chip: [1290, 250],
+  plat: [[330, 478, 280, 'none'], [1100, 530, 110, 'caja'], [1235, 440, 110, 'caja'], [1390, 296, 140, 'none']],
+  coins: [[250, 420], [410, 420], [1100, 480], [1235, 390], [700, 560], [900, 560]],
+  chip: [1390, 230],
   paint(l) { if (l === 'lejos') return space(0.15, 235); if (l === 'pared') return wall('#2a3a7a', '#141c44', [[860, 110, 400, 290]]); if (l === 'suelo') return floorDraw(); if (l === 'delante') return frontPipes(1); },
   hot: [
     { id: 'cama', x: 330, w: 320, h: 160, ic: '✋', draw: () => drawProp('cama', 330),
@@ -368,22 +380,22 @@ room('camarote', {
   enter() { if (!G.seen.intro) { G.seen.intro = 1; save(); intro(); } }
 });
 room('pasillo', {
-  name: 'EL PASILLO', W: 3300,
-  plat: [[2000, 530, 120, 'caja'], [2120, 440, 120, 'caja'], [2330, 330, 240, 'tubo']],
-  coins: [[700, 560], [1080, 560], [2000, 480], [2120, 390], [2260, 280], [2400, 280], [3150, 560]],
-  chip: [2330, 250],
+  name: 'EL PASILLO', W: 3700,
+  plat: [[2360, 530, 110, 'caja'], [2475, 440, 110, 'caja'], [2590, 350, 110, 'caja']],
+  coins: [[760, 560], [1040, 560], [2360, 480], [2475, 390], [2590, 300], [2750, 560], [3600, 560]],
+  chip: [2590, 240],
   paint(l) { if (l === 'lejos') return space(0.2, 250); if (l === 'pared') return wall('#24346a', '#10183a', [[2780, 130, 140, 180], [3080, 130, 140, 180]], F('energia') ? '#35ff8a' : '#ff5a6a'); if (l === 'suelo') return floorDraw(); if (l === 'delante') return frontPipes(5); },
   hot: [
     { id: 'pCam', x: 180, w: 220, h: 330, ic: '🚪', door: dk('pcam', 'camarote', 1460, 'CAMAROTE'), draw() { drawDoor(this); } },
     { id: 'pCoc', x: 620, w: 220, h: 330, ic: '🚪', door: dk('pcoc', 'cocina', 220, 'COCINA'), draw() { drawDoor(this); } },
-    { id: 'bolita', x: 920, w: 170, h: 200, ic: '👋', ch: true, draw: () => drawBot('bolita', 920, { kind: 'bola', col: '#ff9a3a', eye: '#29e6ff', h: 215, lift: 34, img: F('bolitaFeliz') ? 'pj-bolita-2' : 'pj-bolita' }), act: bolita },
-    { id: 'pInv', x: 1300, w: 220, h: 330, ic: '🚪', door: dk('pinv', 'invernadero', 220, 'INVERNADERO'), draw() { drawDoor(this); } },
-    { id: 'pTie', x: 1700, w: 220, h: 330, ic: '🚪', door: dk('ptie', 'tienda', 200, ''), draw() { if (!drawShopFront(1700)) drawDoor(this); } },
-    { id: 'cajon', x: 2830, w: 170, h: 150, ic: '🔨', vis: () => !F('cajaRota'), draw: () => drawCajon(2830),
-      act() { if (has('martillo')) say([['lucas', '¡Uso el martillo!']], () => { take('martillo'); setF('cajaRota'); FX.shake = 0.6; SFX.door(); addCoins(8); (FX.pop = FX.pop || []).push({ x: 2830, y: 420, t: 1.4, s: '+8' }); say([['narr', '¡La caja se rompe! ¡Dentro había ocho monedas!']]); });
+    { id: 'bolita', x: 900, w: 170, h: 200, ic: '👋', ch: true, draw: () => drawBot('bolita', 900, { kind: 'bola', col: '#ff9a3a', eye: '#29e6ff', h: 215, lift: 34, img: F('bolitaFeliz') ? 'pj-bolita-2' : 'pj-bolita' }), act: bolita },
+    { id: 'pInv', x: 1200, w: 220, h: 330, ic: '🚪', door: dk('pinv', 'invernadero', 220, 'INVERNADERO'), draw() { drawDoor(this); } },
+    { id: 'pTie', x: 1800, w: 220, h: 330, ic: '🚪', door: dk('ptie', 'tienda', 200, ''), draw() { if (!drawShopFront(1800)) drawDoor(this); } },
+    { id: 'cajon', x: 3220, w: 170, h: 150, ic: '🔨', vis: () => !F('cajaRota'), draw: () => drawCajon(3220),
+      act() { if (has('martillo')) say([['lucas', '¡Uso el martillo!']], () => { take('martillo'); setF('cajaRota'); FX.shake = 0.6; SFX.door(); addCoins(8); (FX.pop = FX.pop || []).push({ x: 3220, y: 420, t: 1.4, s: '+8' }); say([['narr', '¡La caja se rompe! ¡Dentro había ocho monedas!']]); });
         else say([['lucas', 'Una caja de hierro muy dura.'], ['lucas', 'Pone que no se puede abrir.'], ['lucas', 'Necesito algo para romperla.']]); } },
-    { id: 'pMaq', x: 2620, w: 220, h: 330, ic: '🚪', door: dk('pmaq', 'maquinas', 220, 'MÁQUINAS'), draw() { drawDoor(this); } },
-    { id: 'asc', x: 3000, w: 260, h: 380, ic: '🛗', door: dk('asc', '__subir', 0, 'ASCENSOR', () => !F('energia')), draw() { if (!opt('obj-ascensor-1')) drawProp('ascensor', 3000); drawDoor(this); },
+    { id: 'pMaq', x: 3000, w: 220, h: 330, ic: '🚪', door: dk('pmaq', 'maquinas', 220, 'MÁQUINAS'), draw() { drawDoor(this); } },
+    { id: 'asc', x: 3480, w: 260, h: 380, ic: '🛗', door: dk('asc', '__subir', 0, 'ASCENSOR', () => !F('energia')), draw() { if (!opt('obj-ascensor-1')) drawProp('ascensor', 3480); drawDoor(this); },
       act() { SFX.bad(); say([['lucas', 'El ascensor no funciona.'], ['lucas', '¡La nave no tiene energía!']]); } }
   ],
   enter() { if (!G.seen.pasillo) { G.seen.pasillo = 1; save(); say([['narr', 'Este es el pasillo de la nave. ¡Tiene muchas puertas!'], ['narr', '¡Y hay una tienda! Se ve por el escaparate.']]); } }
@@ -400,27 +412,27 @@ function bolita() {
 }
 room('tienda', {
   name: 'LA TIENDA DE CHISPA', W: 1400,
-  plat: [[480, 460, 200, 'estante'], [700, 330, 160, 'estante'], [1250, 250, 170, 'estante'], [1080, 460, 160, 'estante']],
-  coins: [[480, 410], [700, 280], [1250, 200]],
-  chip: [1300, 170],
+  plat: [[1155, 530, 100, 'caja'], [1260, 440, 100, 'caja']],
+  coins: [[1155, 480], [1260, 390], [480, 560]],
+  chip: [1260, 330],
   paint(l) { if (l === 'lejos') return space(0.1, 290, false);
     if (l === 'pared') { wall('#5a2a8a', '#22103e', [], '#ff5ad8'); for (let i = 0; i < 6; i++) { const x = 200 + i * 200 - camX; ctx.fillStyle = ['#ff5ad8', '#ffd23c', '#29e6ff'][i % 3]; ctx.globalAlpha = 0.25; ctx.beginPath(); ctx.moveTo(x, 50); ctx.lineTo(x - 60, R.floor - 90); ctx.lineTo(x + 60, R.floor - 90); ctx.fill(); ctx.globalAlpha = 1; } return; }
     if (l === 'suelo') { floorDraw('rgba(140,60,200,.25)'); return; } if (l === 'delante') return frontPipes(21, '#5a2a8a'); },
   hot: [
-    { id: 'tDoor', x: 200, w: 220, h: 330, ic: '🚪', door: dk('tdoor', 'pasillo', 1700, 'PASILLO'), draw() { drawDoor(this); } },
+    { id: 'tDoor', x: 200, w: 220, h: 330, ic: '🚪', door: dk('tdoor', 'pasillo', 1800, 'PASILLO'), draw() { drawDoor(this); } },
     { id: 'mostr', x: 880, w: 460, h: 150, draw: () => { drawBot('chispa', 880, { col: '#b04aff', eye: '#ffd23c', hat: 'antena', h: 330 }); drawProp('mostrador', 880); }, ic: '🛒', act: () => shop() }
   ],
   enter() { if (!G.seen.tienda) { G.seen.tienda = 1; save(); say([['chispa', '¡Bienvenido a mi tienda, Lucas!'], ['chispa', 'Soy Chispa. Tengo cosas geniales.'], ['chispa', 'Trae monedas y te las vendo.']]); } }
 });
 room('cocina', {
   name: 'LA COCINA', W: 1800,
-  plat: () => opt('obj-estanteria') ? [[470, 461, 280, 'none'], [470, 359, 280, 'none'], [470, 263, 300, 'none'], [1330, 470, 160], [1560, 300, 170, 'none']] : [[470, 500, 240, 'estante'], [470, 380, 240, 'estante'], [1330, 470, 160], [1560, 300, 170, 'none']],
-  coins: [[420, 410], [520, 410], [1330, 420], [1520, 250], [1600, 250]],
-  chip: [1680, 220],
+  plat: () => opt('obj-estanteria') ? [[470, 461, 280, 'none'], [470, 359, 280, 'none'], [470, 263, 300, 'none'], [1300, 530, 100, 'caja'], [1400, 440, 100, 'caja'], [1560, 300, 140, 'none']] : [[470, 500, 240, 'estante'], [470, 380, 240, 'estante'], [1330, 470, 160], [1560, 300, 170, 'none']],
+  coins: [[420, 410], [520, 410], [1300, 480], [1400, 390], [1520, 250], [1600, 250]],
+  chip: [1560, 220],
   paint(l) { if (l === 'lejos') return space(0.15, 300, false); if (l === 'pared') return wall('#4a2a5a', '#20102e', [[760, 120, 300, 220]], '#ffd23c'); if (l === 'suelo') return floorDraw('rgba(120,60,40,.25)'); if (l === 'delante') return frontPipes(9, '#4a2a5a'); },
   hot: [
     { id: 'cDoor', x: 150, w: 220, h: 330, ic: '🚪', door: dk('cdoor', 'pasillo', 620, 'PASILLO'), draw() { drawDoor(this); } },
-    { id: 'regadera', x: 520, w: 120, h: 90, y: 270, ic: '✋', vis: () => !F('regadera'), draw: () => { const E = opt('obj-estanteria'); if (E) { const H = 360, W = H * E.naturalWidth / E.naturalHeight; ctx.drawImage(E, 470 - camX - W / 2, R.floor - H, W, H); } drawProp('regadera', 520, '', E ? 359 : 380); },
+    { id: 'regadera', x: 520, w: 120, h: 90, y: 270, ic: '✋', vis: () => !F('regadera'), draw: () => { const E = opt('obj-estanteria'); if (E) { const H = 360, W = H * E.naturalWidth / E.naturalHeight; ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(470 - camX, R.floor + 20, W * 0.45, 12, 0, 0, 7); ctx.fill(); ctx.drawImage(E, 470 - camX - W / 2, R.floor - H + 18, W, H); } drawProp('regadera', 520, '', E ? 359 : 380); },
       act() { say([['lucas', '¡Una regadera!']], () => { setF('regadera'); give('regadera'); }); } },
     { id: 'estanteria', x: 470, w: 240, h: 200, y: 420, ic: '👁', vis: () => !F('regadera') && !F('vioEst'), act() { setF('vioEst'); say([['lucas', 'Arriba del todo hay una regadera.'], ['lucas', '¡Tengo que saltar por las baldas!']]); } },
     { id: 'cocinaF', x: 860, w: 400, h: 150, ic: '👁', draw: () => drawProp('cocina', 860), act() { say([['lucas', '¡Cuidado, quema!']]); } },
@@ -437,15 +449,15 @@ function chef() {
 }
 room('invernadero', {
   name: 'EL INVERNADERO', W: 2300,
-  plat: () => F('plantaRegada') ? [[1050, 480, 140, 'hoja'], [1250, 360, 140, 'hoja'], [1060, 240, 140, 'hoja'], [1850, 470, 200]] : [[1850, 470, 200]],
-  coins: [[700, 560], [1050, 430], [1250, 310], [1800, 420], [1900, 420], [2150, 560]],
+  plat: () => F('plantaRegada') ? [[1050, 480, 140, 'hoja'], [1250, 360, 140, 'hoja'], [1060, 240, 140, 'hoja'], [1850, 520, 120, 'caja']] : [[1850, 520, 120, 'caja']],
+  coins: [[700, 560], [1050, 430], [1250, 310], [1820, 470], [1880, 470], [2150, 560]],
   chip: [1060, 180],
   paint(l) { if (l === 'lejos') return space(0.12, 170);
     if (l === 'pared') { wall('#1a4a3a', '#0a2018', [[400, 90, 1300, 300]], '#35ff8a'); for (let x = 450; x < 1700; x += 140) { ctx.fillStyle = '#2a6a4a'; ctx.fillRect(x - camX, 90, 8, 300); } return; }
     if (l === 'suelo') { floorDraw('rgba(40,120,60,.25)'); for (let x = 60; x < R.W; x += 230) { ctx.fillStyle = '#2a8a3a'; ctx.beginPath(); ctx.ellipse(x - camX, R.floor - 6, 60, 18, 0, Math.PI, 0); ctx.fill(); ctx.fillStyle = ['#ff5ad8', '#ffd23c', '#5ad8ff'][x % 3]; ctx.beginPath(); ctx.arc(x - camX + 20, R.floor - 24, 8, 0, 7); ctx.fill(); } return; }
     if (l === 'delante') { const PL2 = opt('delante-plantas'); if (PL2) return frontImg(PL2, VH - 150, 170, 3); for (let i = 0; i < 4; i++) { const x = i * 700 + 300 - camX * 1.3; ctx.fillStyle = '#0e3a1e'; ctx.beginPath(); ctx.ellipse(x, VH + 30, 160, 120, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#1a5a2a'; ctx.beginPath(); ctx.ellipse(x + 60, VH + 10, 90, 80, 0.4, 0, 7); ctx.fill(); } } },
   hot: [
-    { id: 'iDoor', x: 150, w: 220, h: 330, ic: '🚪', door: dk('idoor', 'pasillo', 1300, 'PASILLO'), draw() { drawDoor(this); } },
+    { id: 'iDoor', x: 150, w: 220, h: 330, ic: '🚪', door: dk('idoor', 'pasillo', 1200, 'PASILLO'), draw() { drawDoor(this); } },
     { id: 'grifo', x: 520, w: 140, h: 240, ic: '✋', draw: () => drawProp('grifo', 520, FX.agua > 0 ? 'agua' : ''),
       act() { if (has('regadera')) { FX.agua = 1.6; SFX.grow(); say([['lucas', '¡Lleno la regadera de agua!']], () => { take('regadera'); give('regadera-llena'); }); } else if (has('regadera-llena')) say([['lucas', 'La regadera ya está llena.']]); else say([['lucas', 'Es un grifo de agua.'], ['lucas', 'Si tuviera algo para llevar agua...']]); } },
     { id: 'planta', x: 1150, w: 200, h: 200, ic: '✋', draw: () => drawProp('planta', 1150, F('plantaRegada') ? 'grande' : ''),
@@ -461,14 +473,14 @@ room('invernadero', {
 });
 room('maquinas', {
   name: 'LAS MÁQUINAS', W: 2300, dark: true,
-  plat: [[700, 460, 300], [1100, 350, 240]],
-  coins: [[640, 410], [760, 410], [1060, 300], [1140, 300], [1400, 560]],
+  plat: [[700, 530, 110, 'caja'], [815, 440, 110, 'caja'], [930, 350, 110, 'caja']],
+  coins: [[700, 480], [815, 390], [930, 300], [600, 560], [1400, 560]],
   chip: [2180, 520],
   paint(l) { if (l === 'lejos') { ctx.fillStyle = '#05060f'; ctx.fillRect(0, 0, VW, VH); return; }
     if (l === 'pared') { wall('#2a2a3a', '#101018', [], F('energia') ? '#35ff8a' : '#ff5a6a'); for (let x = 300; x < R.W; x += 260) { if (x - camX < -150 || x - camX > VW + 20) continue; ctx.fillStyle = '#1a1a2a'; rr(x - camX, 140, 120, 330, 14); ctx.fill(); ctx.fillStyle = F('energia') ? '#35ff8a' : '#3a1a1a'; for (let i = 0; i < 6; i++) { ctx.globalAlpha = F('energia') ? 0.4 + 0.6 * Math.abs(Math.sin(time * 3 + i + x)) : 1; ctx.fillRect(x - camX + 20, 170 + i * 45, 80, 20); } ctx.globalAlpha = 1; } return; }
     if (l === 'suelo') return floorDraw('rgba(0,0,0,.25)'); if (l === 'delante') return frontPipes(13, '#3a3a4a'); },
   hot: [
-    { id: 'mDoor', x: 150, w: 220, h: 330, ic: '🚪', door: dk('mdoor', 'pasillo', 2620, 'PASILLO'), draw() { drawDoor(this); } },
+    { id: 'mDoor', x: 150, w: 220, h: 330, ic: '🚪', door: dk('mdoor', 'pasillo', 3000, 'PASILLO'), draw() { drawDoor(this); } },
     { id: 'escoba', x: 950, w: 120, h: 210, ic: '✋', vis: () => !F('escoba'), draw: () => drawProp('escoba', 950), act() { say([['lucas', '¡Una escoba!'], ['lucas', '¿Será la escoba de Bolita?']], () => { setF('escoba'); give('escoba'); }); } },
     { id: 'gen', x: 1700, w: 300, h: 320, ic: '🔧', draw: () => drawProp('generador', 1700, F('energia') ? 'on' : F('tuerca') ? 'tuerca' : ''), act: generador }
   ],
@@ -483,9 +495,9 @@ function generador() {
 function powerOn() { SFX.power(); setF('energia'); FX.flash = 1.5; setTimeout(() => { SFX.win(); say([['narr', '¡Bien! ¡La nave tiene energía otra vez!'], ['lucas', '¡Ahora funcionará el ascensor!']]); }, 1400); }
 room('puente', {
   name: 'EL PUENTE DE MANDO', W: 2100,
-  plat: [[1880, 420, 220], [1650, 300, 140]],
-  coins: [[1820, 370], [1940, 370], [800, 560], [1650, 250]],
-  chip: [2020, 330],
+  plat: [[1760, 530, 110, 'caja'], [1880, 440, 110, 'caja']],
+  coins: [[1760, 480], [1880, 390], [800, 560], [1650, 560]],
+  chip: [1880, 360],
   paint(l) { if (l === 'lejos') return space(0.18, 215); if (l === 'pared') { wall('#1a2a5a', '#0a1030', [[220, 110, 560, 300], [1180, 110, 400, 300]], '#29e6ff'); drawProp('rejilla', 1880, 'abierta', 170); return; } if (l === 'suelo') return floorDraw('rgba(20,40,120,.2)'); if (l === 'delante') return frontPipes(17); },
   hot: [
     { id: 'uAsc', x: 150, w: 220, h: 330, ic: '🛗', door: dk('uasc', '__bajar', 0, 'ASCENSOR'), draw() { drawDoor(this); } },
@@ -565,7 +577,7 @@ function hint1() {
 /* ---------- escenas ---------- */
 function intro() {
   FX.shake = 1.2; noise(1.2, 0.2, 300);
-  say([['narr', 'Esta es la nave Estrella Azul.'], ['narr', 'Una lluvia de meteoritos la ha golpeado.'], ['narr', 'Ahora está perdida en el espacio.'], ['narr', 'Lucas, el pequeño robot, se despierta.'], ['lucas', '¿Qué ha pasado? ¡Todo está muy raro!'], ['narr', 'Usa las flechas para andar. Y la flecha grande para saltar.'], ['narr', 'Cuando salga la mano amarilla, tócala.'], ['narr', 'Coge las monedas. ¡Sirven para comprar!'], ['narr', 'Si no sabes qué hacer, toca la bombilla.']]);
+  say([['narr', 'Esta es la nave Estrella Azul.'], ['narr', 'Una lluvia de meteoritos la ha golpeado.'], ['narr', 'Ahora está perdida en el espacio.'], ['narr', 'Lucas, el pequeño robot, se despierta.'], ['lucas', '¿Qué ha pasado? ¡Todo está muy raro!'], ...(TOUCH ? [['narr', 'Usa las flechas para andar. Y la flecha grande para saltar.'], ['narr', 'Cuando salga la mano amarilla, tócala.']] : [['narr', 'Anda con las flechas del teclado. Salta con la barra espaciadora.'], ['narr', 'Para entrar, coger o hablar, pulsa la tecla E. O haz clic encima.']]), ['narr', 'Coge las monedas. ¡Sirven para comprar!'], ['narr', 'Si no sabes qué hacer, toca la bombilla.']]);
 }
 function finChapter() {
   evt('fin'); SFX.win(); const n = Object.keys(G.chips).length;
@@ -709,6 +721,7 @@ const camino = (id, to, tx, label, dir) => dk(id, to, tx, label, null, { style: 
 
 /* ---------- gorros de Lucas ---------- */
 function drawHat(h) { const k = G.hat || (F('gorro') ? 'gorro' : null); if (!k) return; const hy = -h + 4;
+  const HI = k !== 'gafas' && opt('item-' + k); if (HI) { const W = h * 0.62, H2 = W * HI.naturalHeight / HI.naturalWidth; ctx.save(); ctx.translate(0, -h + h * 0.2 - H2 * 0.45); ctx.rotate(Math.sin(time * 2.5) * 0.03); ctx.scale(k === 'gorro' ? -1 : 1, 1); ctx.drawImage(HI, -W / 2, -H2 / 2, W, H2); ctx.restore(); return; }
   if (k === 'gorro') { ctx.fillStyle = '#ff3a6a'; ctx.beginPath(); ctx.arc(0, hy + 6, 30, Math.PI, 0); ctx.fill(); stroke('#0a0e22', 3); ctx.fillStyle = '#ffd23c'; ctx.fillRect(-36, hy + 2, 72, 8); ctx.fillRect(-2, hy - 34, 4, 14); const pw = Math.cos(time * 20) * 34; ctx.fillStyle = '#29e6ff'; ctx.fillRect(-Math.abs(pw), hy - 38, Math.abs(pw) * 2, 6); }
   else if (k === 'lana') { ctx.fillStyle = '#3a8aff'; ctx.beginPath(); ctx.arc(0, hy + 8, 34, Math.PI, 0); ctx.fill(); stroke('#0a0e22', 3); ctx.fillStyle = '#fff'; ctx.fillRect(-38, hy + 2, 76, 12); ctx.beginPath(); ctx.arc(0, hy - 28, 12, 0, 7); ctx.fill(); }
   else if (k === 'gafas') { ctx.fillStyle = '#0a0e22'; ctx.fillRect(-46, -h * 0.72, 92, 8); ctx.beginPath(); ctx.ellipse(-24, -h * 0.68, 22, 16, 0, 0, 7); ctx.ellipse(24, -h * 0.68, 22, 16, 0, 0, 7); ctx.fill(); }
@@ -1185,7 +1198,7 @@ function enterDoor(h) {
 function enterVent(h) { if (TR || SCENE) return; L.enter = 0.001; SFX.door(); setTimeout(() => { SFX.warp(); TR = { ph: 'out', t: 0, cx: h.x - camX, cy: 180, D: { to: '__conducto' } }; }, 380); }
 function trMid() {
   const D = TR.D;
-  if (D.to === '__subir' || D.to === '__bajar') { SCENE = { k: 'elev', t: 0, up: D.to === '__subir', dur: 2.6, then: D.to === '__subir' ? ['puente', 300] : ['pasillo', 3000] }; TR = null; return; }
+  if (D.to === '__subir' || D.to === '__bajar') { SCENE = { k: 'elev', t: 0, up: D.to === '__subir', dur: 2.6, then: D.to === '__subir' ? ['puente', 300] : ['pasillo', 3360] }; TR = null; return; }
   if (D.to === '__viaje') { SCENE = { k: 'viaje', t: 0, dur: 3.4, pl: D.pl, then: D.dest }; TR = null; return; }
   if (D.to === '__conducto') { SCENE = { k: 'vent', t: 0, dur: 3, then: ['puente', 1880, 100] }; TR = null; return; }
   enterRoom(D.to, D.tx); TR = { ph: 'in', t: 0 }; SFX.warpIn();
@@ -1226,6 +1239,8 @@ holdBtn('bL', 'l'); holdBtn('bR', 'r');
 $('bJ').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); audio(); if (busy()) return advance(); doJump(); $('bJ').classList.add('on'); setTimeout(() => $('bJ').classList.remove('on'), 120); });
 $('bAct').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); audio(); if (busy()) return advance(); act(nearest()); });
 
+let TOUCH = (() => { try { return matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints > 0 && !matchMedia('(pointer:fine)').matches; } catch (e) { return false; } })();
+addEventListener('touchstart', () => { if (!TOUCH) { TOUCH = true; $('ctl').classList.remove('pc'); } }, { passive: true });
 /* ---------- bucle ---------- */
 let last = performance.now(), state = 'title', darkSaid = 0;
 function loop(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; time += dt; if (state === 'play' && R) update(dt); render(); requestAnimationFrame(loop); }
@@ -1386,7 +1401,7 @@ function accOpen(cb, first) {
   gsiLoad(() => { try { google.accounts.id.initialize({ client_id: GOOGLE_ID, ux_mode: 'popup', callback: async r => { msg('Comprobando tu cuenta de Google…'); const x = await api({ a: 'google', credential: r.credential }); x.ok ? done(x) : msg(x.error); } }); google.accounts.id.renderButton($('gBtn'), { theme: 'filled_black', size: 'large', shape: 'pill', text: 'continue_with', width: 300 }); } catch (e) {} });
 }
 function startGame(s) {
-  G = s || NEW(); G.peg = G.peg || {}; for (const k in PEG_ON) if (G.flags[k]) G.peg[PEG_ON[k]] = 1; if (!s) evt('partida'); state = 'play'; show('title', false); $('hud').style.display = 'flex'; $('inv').style.display = 'flex'; $('ctl').style.display = 'block'; paintInv(); paintCoins();
+  G = s || NEW(); G.peg = G.peg || {}; for (const k in PEG_ON) if (G.flags[k]) G.peg[PEG_ON[k]] = 1; if (!s) evt('partida'); state = 'play'; show('title', false); $('hud').style.display = 'flex'; $('inv').style.display = 'flex'; $('ctl').style.display = 'block'; $('ctl').classList.toggle('pc', !TOUCH); paintInv(); paintCoins();
   startMusic(); goFull(); enterRoom(G.room, G.x || 520); TR = { ph: 'in', t: 0 };
 }
 function goFull() { try { if (matchMedia('(pointer:coarse)').matches && document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().then(() => { try { screen.orientation.lock('landscape'); } catch (e) {} }).catch(() => {}); } catch (e) {} }
