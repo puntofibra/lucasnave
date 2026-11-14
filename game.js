@@ -1,7 +1,7 @@
 /* LUCAS Y LA NAVE PERDIDA · aventura de Lucas para niños de 6 y 7 años: se anda y se salta como en un plataformas, pero sin malos */
 (() => {
 'use strict';
-const VERSION = '1.7';
+const VERSION = '1.8';
 const API = 'https://script.google.com/macros/s/AKfycby5_qNFSRwDK-qZmzTWTD-O4p7XpdF2zgezm-8PM7xad66uavF7OS4sWafVRWQzN3pI/exec';
 const GOOGLE_ID = '454055120059-nuhaop4r62urc3u036cc3grpqo71ulg7.apps.googleusercontent.com';
 const $ = id => document.getElementById(id);
@@ -24,7 +24,7 @@ function img(n, src) { if (!IMG[n]) { const im = new Image(); im.src = src || ('
 const ok = im => im && im.complete && im.naturalWidth && !im._bad;
 ['lucas-quieto', 'lucas-avanzando', 'lucas-celebrando', 'lucas-saltando', 'suelo', 'obj-puerta', 'obj-chip'].forEach(n => img(n));
 // imágenes nuevas (PNG sin fondo que irán llegando): mientras no existan, se dibuja una versión provisional por código
-const HAVE = new Set(['pj-capi', 'pj-capi-2', 'pj-capi-dormida', 'pj-chef', 'pj-chef-2', 'pj-bolita', 'pj-bolita-2', 'pj-chispa', 'pj-chispa-2', 'pj-chispa-3', 'lucas-espaldas', 'espacio-lejos', 'pared-camarote', 'pared-pasillo', 'pared-cocina', 'pared-invernadero', 'pared-maquinas', 'pared-puente', 'pared-tienda', 'obj-estanteria', 'obj-nevera', 'obj-cocina', 'obj-grifo', 'obj-panel', 'obj-mostrador', 'obj-moneda', 'obj-cama', 'suelo-borde-nave', 'suelo-relleno-nave', 'delante-plantas', 'delante-tuberias', 'puerta-1', 'puerta-2', 'puerta-3', 'puerta-4', 'obj-ascensor-1', 'obj-ascensor-2', 'obj-ascensor-3', 'obj-rejilla', 'obj-rejilla-abierta', 'obj-taquilla', 'obj-taquilla-medio', 'obj-taquilla-abierta', 'obj-generador', 'obj-generador-tuerca', 'obj-generador-on', 'obj-planta', 'obj-planta-media', 'obj-planta-grande', 'obj-teletransportador', 'casa-tienda-nave', 'item-gorro', 'obj-cajon', 'item-tarjeta', 'item-linterna', 'item-regadera', 'item-regadera-llena', 'item-manzana', 'item-llave', 'item-escoba', 'item-fusible', 'item-martillo', 'item-botas', 'obj-manzana', 'obj-regadera', 'obj-escoba', 'plat-metal', 'plat-estante', 'plat-tubo', 'plat-hoja']);   // imágenes nuevas que ya existen (las demás se dibujan provisionales)
+const HAVE = new Set(['pj-capi', 'pj-capi-2', 'pj-capi-dormida', 'pj-chef', 'pj-chef-2', 'pj-bolita', 'pj-bolita-2', 'pj-chispa', 'pj-chispa-2', 'pj-chispa-3', 'lucas-espaldas', 'espacio-lejos', 'pared-camarote', 'pared-pasillo', 'pared-cocina', 'pared-invernadero', 'pared-maquinas', 'pared-puente', 'pared-tienda', 'ventana-rectangular', 'ventana-rectangular-hueco', 'ventanal', 'ventanal-hueco', 'cristalera', 'cristalera-hueco', 'ventana-redonda', 'ventana-redonda-hueco', 'adorno-poster', 'adorno-reloj', 'adorno-pantalla', 'adorno-tuberia', 'adorno-estante-juguetes', 'obj-estanteria', 'obj-nevera', 'obj-cocina', 'obj-grifo', 'obj-panel', 'obj-mostrador', 'obj-moneda', 'obj-cama', 'suelo-borde-nave', 'suelo-relleno-nave', 'delante-plantas', 'delante-tuberias', 'puerta-1', 'puerta-2', 'puerta-3', 'puerta-4', 'obj-ascensor-1', 'obj-ascensor-2', 'obj-ascensor-3', 'obj-rejilla', 'obj-rejilla-abierta', 'obj-taquilla', 'obj-taquilla-medio', 'obj-taquilla-abierta', 'obj-generador', 'obj-generador-tuerca', 'obj-generador-on', 'obj-planta', 'obj-planta-media', 'obj-planta-grande', 'obj-teletransportador', 'casa-tienda-nave', 'item-gorro', 'obj-cajon', 'item-tarjeta', 'item-linterna', 'item-regadera', 'item-regadera-llena', 'item-manzana', 'item-llave', 'item-escoba', 'item-fusible', 'item-martillo', 'item-botas', 'obj-manzana', 'obj-regadera', 'obj-escoba', 'plat-metal', 'plat-estante', 'plat-tubo', 'plat-hoja']);   // imágenes nuevas que ya existen (las demás se dibujan provisionales)
 function opt(n) { if (!HAVE.has(n)) return null; const im = img(n); return ok(im) ? im : null; }
 HAVE.forEach(n => img(n));
 
@@ -200,21 +200,35 @@ function layer(T, ly) {
     const cielo = T.pl && T.paint.out && opt('cielo-' + T.pl); if (cielo) { tile(cielo, VH, 0.08, 0); const mo = opt('montes-' + T.pl); if (mo) { const h = VH * 0.55; tile(mo, h, 0.35, T.floor + 20 - h); } return; }
     return T.paint('lejos'); }
   if (ly === 'suelo' && T.pl && T.paint.out) { const sg = opt('suelo-' + T.pl); if (sg) { tile(sg, VH - T.floor + 40, 1, T.floor - 40); T.paint.extra && T.paint.extra(); return; } }
-  if (ly === 'pared') { const im = opt('pared-' + T.id); if (im) { tile(im, T.floor + 12, 1, 0, true); if (WINS[T.id]) drawWins(T, WINS[T.id]); if (T.id === 'maquinas') { ctx.fillStyle = F('energia') ? 'rgba(20,255,120,.05)' : 'rgba(40,0,10,.25)'; ctx.fillRect(0, 0, VW, T.floor); } return; } return T.paint('pared'); }
+  if (ly === 'pared') { const im = opt('pared-' + T.id); if (im) { tile(im, T.floor + 12, 1, 0, true); if (WINS[T.id]) drawWins(T, WINS[T.id]); drawDecos(T); if (T.id === 'maquinas') { ctx.fillStyle = F('energia') ? 'rgba(20,255,120,.05)' : 'rgba(40,0,10,.25)'; ctx.fillRect(0, 0, VW, T.floor); } return; } return T.paint('pared'); }
   T.paint(ly);
 }
 /* ---------- ventanas colocadas a mano encima de la pared lisa (por ellas se ve el espacio) ---------- */
 const WINS = {
   camarote: [{ x: 760, y: 110, w: 290, h: 290, r: 1 }],
-  pasillo: [{ x: 400, y: 150, w: 210, h: 130 }, { x: 2800, y: 150, w: 210, h: 130 }],
-  cocina: [{ x: 860, y: 120, w: 210, h: 210, r: 1 }],
-  invernadero: [{ x: 700, y: 90, w: 600, h: 310, arc: 1 }, { x: 1620, y: 90, w: 440, h: 310, arc: 1 }],
-  puente: [{ x: 560, y: 100, w: 620, h: 290 }, { x: 1440, y: 100, w: 520, h: 290 }]
+  pasillo: [{ x: 910, y: 140, w: 270, h: 125 }, { x: 2475, y: 110, w: 270, h: 125 }],
+  cocina: [{ x: 860, y: 110, w: 210, h: 210, r: 1 }],
+  invernadero: [{ x: 760, y: 90, w: 640, h: 300, arc: 1 }, { x: 1700, y: 120, w: 480, h: 226, arc: 1 }],
+  puente: [{ x: 1040, y: 90, w: 1100, h: 380 }]
 };
+// adornos colgados en la pared, en huecos fijos donde no tapan nada
+const DECOS = {
+  camarote: [['adorno-poster', 330, 150, 150], ['adorno-reloj', 560, 95, 90], ['adorno-estante-juguetes', 1170, 175, 120]],
+  pasillo: [['adorno-pantalla', 2760, 150, 100]],
+  cocina: [['adorno-reloj', 1250, 110, 90]],
+  maquinas: [['adorno-tuberia', 1250, 170, 170], ['adorno-pantalla', 460, 170, 120]],
+  tienda: [['adorno-poster', 1180, 150, 140]]
+};
+function drawDecos(T) { for (const [n, x, y, h] of DECOS[T.id] || []) { const im = opt(n); if (!im) continue; const w = h * im.naturalWidth / im.naturalHeight, sx = x - camX; if (sx + w < 0 || sx - w > VW) continue; ctx.drawImage(im, sx - w / 2, y, w, h); } }
+const WC = document.createElement('canvas'), WX = WC.getContext('2d');
+
 function winPath(o, x0) { const x = x0 - o.w / 2; ctx.beginPath(); if (o.r) ctx.arc(x0, o.y + o.h / 2, o.w / 2, 0, 7); else if (o.arc) { ctx.moveTo(x, o.y + o.h); ctx.lineTo(x, o.y + o.w / 4); ctx.quadraticCurveTo(x0, o.y - o.w / 6, x + o.w, o.y + o.w / 4); ctx.lineTo(x + o.w, o.y + o.h); ctx.closePath(); } else rr(x, o.y, o.w, o.h, 24); }
 function drawWins(T, list) {
   const hue = { camarote: 235, pasillo: 250, cocina: 300, invernadero: 170, puente: 215 }[T.id] || 230;
-  for (const o of list) { const x0 = o.x - camX; if (x0 + o.w < -50 || x0 - o.w > VW + 50) continue; const vi = opt(o.r ? 'ventana-redonda' : o.arc ? 'cristalera' : T.id === 'puente' ? 'ventanal' : 'ventana-rectangular');
+  for (const o of list) { const x0 = o.x - camX; if (x0 + o.w < -50 || x0 - o.w > VW + 50) continue; const vn = o.r ? 'ventana-redonda' : o.arc ? 'cristalera' : T.id === 'puente' ? 'ventanal' : 'ventana-rectangular', vi = opt(vn), mk = opt(vn + '-hueco');
+    if (vi && mk) { const w = Math.round(o.w), h = Math.round(o.h), x = Math.round(x0 - w / 2), sp = opt('espacio-lejos'); WC.width = w; WC.height = h; WX.globalCompositeOperation = 'source-over';
+      if (sp) { const H = VH, tw = H * sp.naturalWidth / sp.naturalHeight, off = camX * 0.15; for (let i = Math.floor((off + x) / tw); i * tw - off - x < w; i++) WX.drawImage(sp, i * tw - off - x, -o.y, tw + 1, H); } else { WX.fillStyle = '#0a0e2a'; WX.fillRect(0, 0, w, h); }
+      WX.globalCompositeOperation = 'destination-in'; WX.drawImage(mk, 0, 0, w, h); ctx.drawImage(WC, x, o.y); ctx.drawImage(vi, x, o.y, w, h); continue; }
     ctx.save(); winPath(o, x0); ctx.clip(); { const sp = opt('espacio-lejos'); if (sp) tile(sp, VH, 0.15, 0); else space(0.15, hue, o.w > 250); } ctx.restore();
     if (vi) { ctx.drawImage(vi, x0 - o.w / 2 - o.w * 0.08, o.y - o.h * 0.08, o.w * 1.16, o.h * 1.16); continue; }
     winPath(o, x0); ctx.lineWidth = 18; ctx.strokeStyle = T.id === 'invernadero' ? '#2a7a4a' : T.id === 'puente' ? '#e8f0ff' : '#5a6a90'; ctx.stroke(); ctx.lineWidth = 4; ctx.strokeStyle = '#0a0e22'; ctx.stroke();
@@ -322,8 +336,8 @@ function drawBot(id, x, o) {
 }
 
 /* ---------- objetos provisionales ---------- */
-const PROP_H = { cama: 270, taquilla: 330, nevera: 330, cocina: 230, grifo: 230, planta: 470, generador: 330, ascensor: 400, panel: 200, pantalla: 480, escoba: 210, regadera: 90, manzana: 64, mostrador: 185, rejilla: 120 };
-const PROP_SINK = { cama: 46 }, PROP_FLIP = { cama: !HAVE.has('obj-cama-lado') };
+const PROP_H = { cama: 200, taquilla: 330, nevera: 330, cocina: 230, grifo: 230, planta: 470, generador: 330, ascensor: 400, panel: 200, pantalla: 480, escoba: 210, regadera: 90, manzana: 64, mostrador: 185, rejilla: 120 };
+const PROP_SINK = { cama: 14 }, PROP_FLIP = {};
 function drawProp(kind, x, st, yy) {
   const pi = opt('obj-' + kind + (st ? '-' + st : '')) || (st === 'agua' ? opt('obj-' + kind) : null), sx = x - camX, y = yy != null ? yy : R.floor;
   if (sx < -400 || sx > VW + 400) return;
@@ -384,7 +398,7 @@ const CHIP_ROOMS = ['camarote', 'pasillo', 'tienda', 'cocina', 'invernadero', 'm
 const dk = (id, to, tx, label, locked, extra) => Object.assign({ id, to, tx, label, locked }, extra || {});
 room('camarote', {
   name: 'EL CAMAROTE', W: 1750,
-  plat: [[330, 500, 270, 'none'], [1100, 530, 110, 'caja'], [1235, 440, 110, 'caja'], [1390, 296, 140, 'none']],
+  plat: [[330, 505, 380, 'none'], [1100, 530, 110, 'caja'], [1235, 440, 110, 'caja'], [1390, 296, 140, 'none']],
   coins: [[250, 420], [410, 420], [1100, 480], [1235, 390], [700, 560], [900, 560]],
   chip: [1390, 230],
   paint(l) { if (l === 'lejos') return space(0.15, 235); if (l === 'pared') return wall('#2a3a7a', '#141c44', [[860, 110, 400, 290]]); if (l === 'suelo') return floorDraw(); if (l === 'delante') return frontPipes(1); },
