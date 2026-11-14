@@ -1,7 +1,7 @@
 /* LUCAS Y LA NAVE PERDIDA · aventura de Lucas para niños de 6 y 7 años: se anda y se salta como en un plataformas, pero sin malos */
 (() => {
 'use strict';
-const VERSION = '1.1';
+const VERSION = '1.2';
 const API = 'https://script.google.com/macros/s/AKfycby5_qNFSRwDK-qZmzTWTD-O4p7XpdF2zgezm-8PM7xad66uavF7OS4sWafVRWQzN3pI/exec';
 const GOOGLE_ID = '454055120059-nuhaop4r62urc3u036cc3grpqo71ulg7.apps.googleusercontent.com';
 const $ = id => document.getElementById(id);
@@ -239,7 +239,7 @@ function drawDoor(h) {
     if (fr !== 'obj-ascensor-' || !fi) { if (op > 0.02 && !PREVIEW) { preview(D.to, px, py, iw, ph, D.tx); glow(sx + w / 2, y + dh - 60, 180, 'rgba(160,240,255,A)', 0.22 * op); }
       else { ctx.fillStyle = '#05060f'; rr(px, py, iw, ph, 14); ctx.fill(); } } }
   if (fi) { const ih = fr === 'puerta-' ? dh + 20 : dh + 50, iw = ih * fi.naturalWidth / fi.naturalHeight; ctx.drawImage(fi, sx + w / 2 - iw / 2, y + dh - ih + 4, iw, ih);
-    if (fr === 'puerta-') { ctx.fillStyle = locked ? (Math.floor(time * 3) % 2 ? '#ff3a4a' : '#7a1020') : '#35ff8a'; ctx.beginPath(); ctx.arc(sx + w / 2, y + dh - ih + ih * 0.025, 7, 0, 7); ctx.fill(); if (!PREVIEW) glow(sx + w / 2, y + dh - ih + 10, 30, locked ? 'rgba(255,60,80,A)' : 'rgba(53,255,138,A)', 0.6); }
+    if (fr === 'puerta-') { ctx.fillStyle = locked ? (Math.floor(time * 3) % 2 ? '#ff3a4a' : '#7a1020') : '#35ff8a'; ctx.beginPath(); ctx.arc(sx + w / 2, y + dh - ih + ih * 0.05, 7, 0, 7); ctx.fill(); if (!PREVIEW) glow(sx + w / 2, y + dh - ih + 10, 30, locked ? 'rgba(255,60,80,A)' : 'rgba(53,255,138,A)', 0.6); }
     if (D.label) { ctx.font = '800 22px "Baloo 2",system-ui'; ctx.textAlign = 'center'; const tw = Math.max(120, ctx.measureText(D.label).width + 30), ly = y + dh - ih - 40; ctx.fillStyle = '#0a0e22'; rr(sx + w / 2 - tw / 2, ly, tw, 30, 10); ctx.fill(); ctx.fillStyle = '#9ff0ff'; ctx.fillText(D.label, sx + w / 2, ly + 23); }
     return; }
   ctx.save(); ctx.beginPath(); ctx.rect(sx, y, w, dh); ctx.clip();
